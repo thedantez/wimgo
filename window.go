@@ -37,8 +37,9 @@ import (
 )
 
 type BrowserWindow struct {
-	window 	*C.GtkWidget
-	webView *C.WebKitWebView
+	window 		*C.GtkWidget
+	webView 	*C.WebKitWebView
+	statusLabel *C.GtkWidget
 }
 
 func (b *BrowserWindow) Show() {
@@ -53,6 +54,12 @@ func (b *BrowserWindow) Scroll(deltaY int) {
 		b.webView,
 		jsScript,
 		nil, nil, nil)
+}
+
+func (b *BrowserWindow) SetStatus(text string) {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.statusLabel)), cText)
 }
 
 func init() {
@@ -76,6 +83,12 @@ func NewWindow(url string) *BrowserWindow {
 		(*C.gchar)(unsafe.Pointer(keyPress)),
 		C.GCallback(C.on_key_press),
 		nil, nil, 0,
+	)
+
+	box := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)
+	C.gtk_container_add(
+		(*C.GtkContainer)(unsafe.Pointer(window)),
+		(*C.GtkWidget)(unsafe.Pointer(box)),
 	)
 
 	cTitle := C.CString("wimgo browser")
@@ -102,9 +115,24 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
-	C.gtk_container_add(
-		(*C.GtkContainer)(unsafe.Pointer(window)),
+	C.gtk_box_pack_start(
+		(*C.GtkBox)(unsafe.Pointer(box)),
 		(*C.GtkWidget)(unsafe.Pointer(webView)),
+		1,	// expand = true
+		1,	// fill = true
+		0,	// padding = 0
+	)
+
+	cStatus := C.CString("[NORMAL]")
+	defer C.free(unsafe.Pointer(cStatus))
+	statusLabel := C.gtk_label_new(cStatus)
+	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_END)
+	C.gtk_box_pack_start(
+		(*C.GtkBox)(unsafe.Pointer(box)),
+		(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		0,	// expand = false
+		0,	// fill = false
+		0,	// padding = 0
 	)
 
 	cURL := C.CString(url)
@@ -127,6 +155,7 @@ func NewWindow(url string) *BrowserWindow {
 	appWindow = &BrowserWindow{
 		window: window,
 		webView: (*C.WebKitWebView)(unsafe.Pointer(webView)),
+		statusLabel: (*C.GtkWidget)(unsafe.Pointer(statusLabel)),
 	}
 	return appWindow
 }
