@@ -44,6 +44,7 @@ type BrowserWindow struct {
 	webView 	*C.WebKitWebView
 	statusLabel *C.GtkWidget
 	cmdEntry	*C.GtkWidget
+	infoLabel	*C.GtkWidget
 }
 
 
@@ -51,6 +52,15 @@ func (b *BrowserWindow) Show() {
 	C.gtk_widget_show_all(b.window)
 	C.gtk_widget_hide(b.cmdEntry)
 	C.gtk_main()
+}
+
+func (b *BrowserWindow) SetInfo(text string) {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+	C.gtk_label_set_text(
+		(*C.GtkLabel)(unsafe.Pointer(b.infoLabel)),
+		cText,
+	)
 }
 
 func (b *BrowserWindow) Scroll(deltaY int) {
@@ -167,7 +177,6 @@ func NewWindow(url string) *BrowserWindow {
 		cURL,
 	)
 
-
 	// creating bottom (status, command) bar
 	cStatus := C.CString("[NORMAL] ")
 	defer C.free(unsafe.Pointer(cStatus))
@@ -180,6 +189,10 @@ func NewWindow(url string) *BrowserWindow {
 		(*C.GtkEntry)(unsafe.Pointer(cmdEntry)),
 		0,
 	)
+
+	cURLText := C.CString(url)
+	defer C.free(unsafe.Pointer(cURLText))
+	infoLabel := C.gtk_label_new(cURLText)
 
 	// styling by CSS
 	cssData := `
@@ -245,13 +258,13 @@ func NewWindow(url string) *BrowserWindow {
 		0,	// padding = 0
 	)
 
-	// C.gtk_box_pack_end(		// packing infoLabel to bottom box
-	// 	(*C.GtkBox)(unsafe.Pointer(bottombox)),
-	// 	(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
-	// 	1,	// expand = false
-	// 	1,	// fill = false
-	// 	0,	// padding = 0
-	// )
+	C.gtk_box_pack_end(		// packing infoLabel to bottom box
+		(*C.GtkBox)(unsafe.Pointer(bottombox)),
+		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
+		0,	// expand = false
+		0,	// fill = false
+		4,	// padding = 0
+	)
 
 	C.gtk_box_pack_end(		// packing bottombox to main box
 		(*C.GtkBox)(unsafe.Pointer(mainbox)),
@@ -262,10 +275,11 @@ func NewWindow(url string) *BrowserWindow {
 	)
 
 	appWindow = &BrowserWindow{		// modify appWindow variable for return & save changes in global level
-		window: window,
-		webView: (*C.WebKitWebView)(unsafe.Pointer(webView)),
-		statusLabel: (*C.GtkWidget)(unsafe.Pointer(statusLabel)),
-		cmdEntry:	(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
+		window: 		window,
+		webView: 		(*C.WebKitWebView)(unsafe.Pointer(webView)),
+		statusLabel: 	(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		cmdEntry:		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
+		infoLabel: 		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
 	}
 	return appWindow
 }
