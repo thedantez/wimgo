@@ -15,28 +15,33 @@ func HandleKeyPress(keyval uint, state uint) bool {
 		switch keyval {
 		case 105:	// i
 			currentMode = ModeInsert
+			appWindow.SetStatus("[INSERT] ")
 			slog.Info("mode switched to INSERT")
-			return true
 		case 118:	// v
 			currentMode = ModeVisible
+			appWindow.SetStatus("[VISIBLE] ")
 			slog.Info("mode switched to VISIBLE")
-			return true
 		case 106: 	// j
 			slog.Info("detected j")
 			if appWindow != nil {
 				appWindow.Scroll(1) // scroll to down
 			}
-			return true
 		case 107:	// k
 			slog.Info("detected k")
 			if appWindow != nil {
 				appWindow.Scroll(-1) // scroll to up
 			}
-			return true
+		case 111:	// o
+			currentMode = ModeCommand
+			appWindow.SetStatus("[COMMAND] ")
+			slog.Info("detected o")
+			//OpenUrl()
 		}
+		return true
 	default:	// ModeInsert / ModeVisible
 		if keyval == 0xff1b {		// escape
 			currentMode = ModeNormal
+			appWindow.SetStatus("[NORMAL] ")
 			slog.Info("mode switched to NORMAL")
 		}
 		return false

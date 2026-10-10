@@ -40,10 +40,12 @@ type BrowserWindow struct {
 	window 		*C.GtkWidget
 	webView 	*C.WebKitWebView
 	statusLabel *C.GtkWidget
+	cmdEntry	*C.GtkWidget
 }
 
 func (b *BrowserWindow) Show() {
 	C.gtk_widget_show_all(b.window)
+	C.gtk_widget_hide(b.cmdEntry)
 	C.gtk_main()
 }
 
@@ -123,13 +125,23 @@ func NewWindow(url string) *BrowserWindow {
 		0,	// padding = 0
 	)
 
-	cStatus := C.CString("[NORMAL]")
+	cStatus := C.CString("[NORMAL] ")
 	defer C.free(unsafe.Pointer(cStatus))
 	statusLabel := C.gtk_label_new(cStatus)
 	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_END)
 	C.gtk_box_pack_start(
 		(*C.GtkBox)(unsafe.Pointer(box)),
 		(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		0,	// expand = false
+		0,	// fill = false
+		0,	// padding = 0
+	)
+
+	cmdEntry := C.gtk_entry_new()
+	C.gtk_widget_hide(cmdEntry)
+	C.gtk_box_pack_start(
+		(*C.GtkBox)(unsafe.Pointer(box)),
+		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 		0,	// expand = false
 		0,	// fill = false
 		0,	// padding = 0
@@ -156,6 +168,7 @@ func NewWindow(url string) *BrowserWindow {
 		window: window,
 		webView: (*C.WebKitWebView)(unsafe.Pointer(webView)),
 		statusLabel: (*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		cmdEntry:	(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 	}
 	return appWindow
 }

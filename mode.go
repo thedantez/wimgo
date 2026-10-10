@@ -2,9 +2,10 @@ package main
 
 type Mode int
 const (
-	ModeNormal = iota
-	ModeInsert
-	ModeVisible
+	ModeNormal = iota	// 0
+	ModeInsert			// 1
+	ModeVisible			// 2
+	ModeCommand			// 3
 )
 var currentMode = ModeNormal
 
@@ -16,6 +17,8 @@ func (m Mode) String() string {
 		return "INSERT"
 	case ModeVisible:
 		return "VISIBLE"
+	case ModeCommand:
+		return "COMMAND"
 	default:
 		return "UNKNOWN"
 	}
