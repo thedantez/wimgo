@@ -1,6 +1,7 @@
 package main
 
 // CGO & C-world
+
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.1
 #include <gtk/gtk.h>
@@ -67,12 +68,36 @@ func (b *BrowserWindow) SetStatus(text string) {	// normal/insert/command/visual
 	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.statusLabel)), cText)
 }
 
+func (b *BrowserWindow) OpenCommand(prefix string) {
+	cPrefix := C.CString(prefix)
+	defer C.free(unsafe.Pointer(cPrefix))
+	C.gtk_widget_show(b.cmdEntry)
+	C.gtk_entry_set_text(
+		(*C.GtkEntry)(unsafe.Pointer(b.cmdEntry)),
+		cPrefix,
+	)
+	C.gtk_widget_grab_focus(b.cmdEntry)
+}
+
+
+func (b *BrowserWindow) CloseCommand() {
+	cEmpty := C.CString("")
+	defer C.free(unsafe.Pointer(cEmpty))
+	C.gtk_entry_set_text(
+		(*C.GtkEntry)(unsafe.Pointer(b.cmdEntry)),
+		cEmpty,
+	)
+	C.gtk_widget_hide(b.cmdEntry)
+	C.gtk_widget_grab_focus(
+		(*C.GtkWidget)(unsafe.Pointer(b.webView)),
+	)
+}
+
 func init() {
 	runtime.LockOSThread()
 }
 
 var appWindow *BrowserWindow	// global pointer for changes
-
 
 func NewWindow(url string) *BrowserWindow {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))		// creating stuctured logs
@@ -141,7 +166,7 @@ func NewWindow(url string) *BrowserWindow {
 	cStatus := C.CString("[NORMAL] ")
 	defer C.free(unsafe.Pointer(cStatus))
 	statusLabel := C.gtk_label_new(cStatus)
-	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_END)
+	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_START)
 
 	cmdEntry := C.gtk_entry_new()
 	C.gtk_widget_hide(cmdEntry)
@@ -171,13 +196,21 @@ func NewWindow(url string) *BrowserWindow {
 		0,	// padding = 0
 	)
 
-	C.gtk_box_pack_start(	// adding cmdEntry input area to bottom box
+	C.gtk_box_pack_start(	// packing cmdEntry input area to bottom box
 		(*C.GtkBox)(unsafe.Pointer(bottombox)),
 		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 		1,	// expand = false
 		1,	// fill = false
 		0,	// padding = 0
 	)
+
+	// C.gtk_box_pack_end(		// packing infoLabel to bottom box
+	// 	(*C.GtkBox)(unsafe.Pointer(bottombox)),
+	// 	(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
+	// 	1,	// expand = false
+	// 	1,	// fill = false
+	// 	0,	// padding = 0
+	// )
 
 	C.gtk_box_pack_end(		// packing bottombox to main box
 		(*C.GtkBox)(unsafe.Pointer(mainbox)),

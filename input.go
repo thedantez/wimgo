@@ -33,13 +33,16 @@ func HandleKeyPress(keyval uint, state uint) bool {
 			}
 		case 111:	// o
 			currentMode = ModeCommand
+			appWindow.OpenCommand(":open ")
 			appWindow.SetStatus("[COMMAND] ")
 			slog.Info("detected o")
-			//OpenUrl()
 		}
 		return true
-	default:	// ModeInsert / ModeVisible
+	default:	// ModeInsert/ModeVisible/ModeCommand
 		if keyval == 0xff1b {		// escape
+			if currentMode == ModeCommand {
+				appWindow.CloseCommand()
+			}
 			currentMode = ModeNormal
 			appWindow.SetStatus("[NORMAL] ")
 			slog.Info("mode switched to NORMAL")
