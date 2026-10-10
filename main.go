@@ -20,7 +20,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logger.Info("starting wimgo...")
 
-	win :=	NewWindow("https://vk.com")
+	win :=	NewWindow("https://google.com")
 	win.Show()
 
 	logger.Info("window opened, entering into main cycle GTK events")

@@ -9,7 +9,7 @@ import (
 )
 
 //export HandleKeyPress
-func HandleKeyPress(keyval uint, state uint) bool {
+func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 	switch currentMode { // call to mode.go
 	case 0:		// ModeNormal
 		switch keyval {
@@ -37,7 +37,7 @@ func HandleKeyPress(keyval uint, state uint) bool {
 			appWindow.SetStatus("[COMMAND] ")
 			slog.Info("detected o")
 		}
-		return true
+		return C.TRUE
 	default:	// ModeInsert/ModeVisible/ModeCommand
 		if keyval == 0xff1b {		// escape
 			if currentMode == ModeCommand {
@@ -47,7 +47,7 @@ func HandleKeyPress(keyval uint, state uint) bool {
 			appWindow.SetStatus("[NORMAL] ")
 			slog.Info("mode switched to NORMAL")
 		}
-		return false
+		return C.FALSE
 	}
-	return false
+	return C.FALSE
 }

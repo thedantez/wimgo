@@ -1,0 +1,23 @@
+#ifndef CALLBACKS_H
+#define CALLBACKS_H
+
+#include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
+
+gboolean on_load_failed(WebKitWebView *web_view,
+								WebKitLoadEvent load_event,
+								gchar *failing_uri,
+								GError *error,
+								gpointer user_data);
+
+void on_load_changed(WebKitWebView *web_view,
+							 WebKitLoadEvent load_event,
+						 	 gpointer user_data);
+
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
+
+void on_notify_progress(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data);
+
+void enable_dark_theme(void);
+
+#endif

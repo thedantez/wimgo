@@ -4,30 +4,7 @@ package main
 
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.1
-#include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
-gboolean on_load_failed(WebKitWebView *web_view,
-								WebKitLoadEvent load_event,
-								gchar *failing_uri,
-								GError *error,
-								gpointer user_data) {
-	g_print("[WebKit Error] URI: %s | Error: %s\n", failing_uri, error->message);
-	return FALSE;
-}
-
-void on_load_changed(WebKitWebView *web_view,
-							 WebKitLoadEvent load_event,
-						 	 gpointer user_data) {
-	if (load_event == WEBKIT_LOAD_FINISHED) {
-		g_print("[WebKit] Page load finished: %s\n", webkit_web_view_get_uri(web_view));
-	}
-}
-
-extern int HandleKeyPress(unsigned int keyval, unsigned int state);
-gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
-	g_print("[KeyPress] key pressed %u : %u\n", event->keyval, event->state);
-	return HandleKeyPress(event->keyval, event->state);
-}
+#include "callbacks.h"
 */
 import "C" 	// import C-world
 
@@ -48,22 +25,16 @@ type BrowserWindow struct {
 }
 
 
+// func for hide cmdEntry
 func (b *BrowserWindow) Show() {
 	C.gtk_widget_show_all(b.window)
 	C.gtk_widget_hide(b.cmdEntry)
 	C.gtk_main()
 }
 
-func (b *BrowserWindow) SetInfo(text string) {
-	cText := C.CString(text)
-	defer C.free(unsafe.Pointer(cText))
-	C.gtk_label_set_text(
-		(*C.GtkLabel)(unsafe.Pointer(b.infoLabel)),
-		cText,
-	)
-}
 
-func (b *BrowserWindow) Scroll(deltaY int) {
+// func(-s) to scrolling
+func (b *BrowserWindow) Scroll(deltaY int) {		// need to add scroll by Ox: create new func or modify this func
 	jsScript := C.CString(fmt.Sprintf("window.scrollBy(0, %d)", (deltaY * 100)))
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
@@ -72,12 +43,15 @@ func (b *BrowserWindow) Scroll(deltaY int) {
 		nil, nil, nil)
 }
 
-func (b *BrowserWindow) SetStatus(text string) {	// normal/insert/command/visual
+// func for modify statusLabel by normal/insert/command/visual
+func (b *BrowserWindow) SetStatus(text string) {
 	cText := C.CString(text)
 	defer C.free(unsafe.Pointer(cText))
 	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.statusLabel)), cText)
 }
 
+
+// funcs for ModeCommand
 func (b *BrowserWindow) OpenCommand(prefix string) {
 	cPrefix := C.CString(prefix)
 	defer C.free(unsafe.Pointer(cPrefix))
@@ -95,7 +69,6 @@ func (b *BrowserWindow) OpenCommand(prefix string) {
 	)
 }
 
-
 func (b *BrowserWindow) CloseCommand() {
 	cEmpty := C.CString("")
 	defer C.free(unsafe.Pointer(cEmpty))
@@ -109,6 +82,34 @@ func (b *BrowserWindow) CloseCommand() {
 	)
 }
 
+// funcs for infoLabel
+func (b *BrowserWindow) SetInfo(text string) {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+	C.gtk_label_set_text(
+		(*C.GtkLabel)(unsafe.Pointer(b.infoLabel)),
+		cText,
+	)
+}
+
+//export UpdateLoadProgress
+func UpdateLoadProgress(progress float64) {
+	if appWindow == nil {
+		return
+	}
+
+	percent := int(progress * 100)
+	if percent >= 100 {
+		cURI := C.webkit_web_view_get_uri(appWindow.webView)
+		if cURI != nil {
+			appWindow.SetInfo(C.GoString(cURI))
+		}
+	} else {
+		appWindow.SetInfo(fmt.Sprintf("[%d%%]", percent))
+	}
+}
+
+// func for start GTK
 func init() {
 	runtime.LockOSThread()
 }
@@ -147,10 +148,12 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
-	// engine: WebKit
-	webView := C.webkit_web_view_new()
+	C.enable_dark_theme() 	// setting dark theme
 
-	cSignalFailed := C.CString("load-failed")
+	// engine: WebKit
+	webView := C.webkit_web_view_new()	// window for view web
+
+	cSignalFailed := C.CString("load-failed")		// if web can't load
 	defer C.free(unsafe.Pointer(cSignalFailed))
 	C.g_signal_connect_data(	// connect w/ C-world
 		C.gpointer(webView),
@@ -159,12 +162,21 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
-	cSignalChanged := C.CString("load-changed")
+	cSignalChanged := C.CString("load-changed")		// if web loaded/changed
 	defer C.free(unsafe.Pointer(cSignalChanged))
 	C.g_signal_connect_data(	// connect w/ C-world
 		C.gpointer(webView),
 		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
 		C.GCallback(C.on_load_changed),
+		nil, nil, 0,
+	)
+
+	cSignalProgress := C.CString("notify::estimated-load-progress")		// editing status of loading page in infoLabel
+	defer C.free(unsafe.Pointer(cSignalProgress))
+	C.g_signal_connect_data(
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalProgress)),
+		C.GCallback(C.on_notify_progress),
 		nil, nil, 0,
 	)
 
@@ -177,7 +189,7 @@ func NewWindow(url string) *BrowserWindow {
 		cURL,
 	)
 
-	// creating bottom (status, command) bar
+	// creating bottom (status, command) bar, infolabel
 	cStatus := C.CString("[NORMAL] ")
 	defer C.free(unsafe.Pointer(cStatus))
 	statusLabel := C.gtk_label_new(cStatus)
@@ -193,9 +205,24 @@ func NewWindow(url string) *BrowserWindow {
 	cURLText := C.CString(url)
 	defer C.free(unsafe.Pointer(cURLText))
 	infoLabel := C.gtk_label_new(cURLText)
+	C.gtk_label_set_ellipsize(
+		(*C.GtkLabel)(unsafe.Pointer(infoLabel)),
+		C.PANGO_ELLIPSIZE_END,
+	)
+	C.gtk_label_set_max_width_chars(
+		(*C.GtkLabel)(unsafe.Pointer(infoLabel)),
+		65,
+	)
+	C.gtk_label_set_single_line_mode(	// single mode for label
+		(*C.GtkLabel)(unsafe.Pointer(infoLabel)),
+		C.TRUE,
+	)
 
-	// styling by CSS
+	// style by CSS
 	cssData := `
+		window, box {
+			background-color: #000000;
+		}
 		entry, label {
 			border: none;
 			box-shadow: none;
