@@ -75,38 +75,43 @@ var appWindow *BrowserWindow	// global pointer for changes
 
 
 func NewWindow(url string) *BrowserWindow {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))		// creating stuctured logs
 	logger.Info("starting creating window...")
 
-
+	// main window GTK
 	C.gtk_init(nil, nil)	// initializing GTK
 
 	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
 	C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
-	keyPress := C.CString("key-press-event")
+
+	keyPress := C.CString("key-press-event")	// key press handler
 	defer C.free(unsafe.Pointer(keyPress))
-	C.g_signal_connect_data(
+	C.g_signal_connect_data(	// connect w/ C-world
 		C.gpointer(window),
 		(*C.gchar)(unsafe.Pointer(keyPress)),
 		C.GCallback(C.on_key_press),
 		nil, nil, 0,
 	)
 
-	box := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)
-	C.gtk_container_add(
-		(*C.GtkContainer)(unsafe.Pointer(window)),
-		(*C.GtkWidget)(unsafe.Pointer(box)),
-	)
-
-	cTitle := C.CString("wimgo browser")
+	cTitle := C.CString("wimgo browser")	// title of window
 	defer C.free(unsafe.Pointer(cTitle))
 	C.gtk_window_set_title((*C.GtkWindow)(unsafe.Pointer(window)), cTitle)
 
+	cSignalDestroy := C.CString("destroy")	// destroy when window was closed
+	defer C.free(unsafe.Pointer(cSignalDestroy))
+	C.g_signal_connect_data(	// connect w/ C-world
+		C.gpointer(window),
+		(*C.gchar)(unsafe.Pointer(cSignalDestroy)),
+		C.GCallback(C.gtk_main_quit),
+		nil, nil, 0,
+	)
+
+	// engine: WebKit
 	webView := C.webkit_web_view_new()
 
 	cSignalFailed := C.CString("load-failed")
 	defer C.free(unsafe.Pointer(cSignalFailed))
-	C.g_signal_connect_data(
+	C.g_signal_connect_data(	// connect w/ C-world
 		C.gpointer(webView),
 		(*C.gchar)(unsafe.Pointer(cSignalFailed)),
 		C.GCallback(C.on_load_failed),
@@ -115,43 +120,14 @@ func NewWindow(url string) *BrowserWindow {
 
 	cSignalChanged := C.CString("load-changed")
 	defer C.free(unsafe.Pointer(cSignalChanged))
-	C.g_signal_connect_data(
+	C.g_signal_connect_data(	// connect w/ C-world
 		C.gpointer(webView),
 		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
 		C.GCallback(C.on_load_changed),
 		nil, nil, 0,
 	)
 
-	C.gtk_box_pack_start(	// adding webView window to box
-		(*C.GtkBox)(unsafe.Pointer(box)),
-		(*C.GtkWidget)(unsafe.Pointer(webView)),
-		1,	// expand = true
-		1,	// fill = true
-		0,	// padding = 0
-	)
-
-	cStatus := C.CString("[NORMAL] ")
-	defer C.free(unsafe.Pointer(cStatus))
-	statusLabel := C.gtk_label_new(cStatus)
-	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_END)
-	C.gtk_box_pack_start(
-		(*C.GtkBox)(unsafe.Pointer(box)),
-		(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
-		0,	// expand = false
-		0,	// fill = false
-		0,	// padding = 0
-	)
-
-	cmdEntry := C.gtk_entry_new()
-	C.gtk_widget_hide(cmdEntry)
-	C.gtk_box_pack_start(	// adding cmdEntry input area to box
-		(*C.GtkBox)(unsafe.Pointer(box)),
-		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
-		0,	// expand = false
-		0,	// fill = false
-		0,	// padding = 0
-	)
-
+	// loading url
 	cURL := C.CString(url)
 	defer C.free(unsafe.Pointer(cURL))
 
@@ -160,16 +136,58 @@ func NewWindow(url string) *BrowserWindow {
 		cURL,
 	)
 
-	cSignalDestroy := C.CString("destroy")
-	defer C.free(unsafe.Pointer(cSignalDestroy))
-	C.g_signal_connect_data(
-		C.gpointer(window),
-		(*C.gchar)(unsafe.Pointer(cSignalDestroy)),
-		C.GCallback(C.gtk_main_quit),
-		nil, nil, 0,
+
+	// creating bottom (status, command) bar
+	cStatus := C.CString("[NORMAL] ")
+	defer C.free(unsafe.Pointer(cStatus))
+	statusLabel := C.gtk_label_new(cStatus)
+	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_END)
+
+	cmdEntry := C.gtk_entry_new()
+	C.gtk_widget_hide(cmdEntry)
+
+	// packing
+	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box
+	bottombox := C.gtk_box_new(C.GTK_ORIENTATION_HORIZONTAL, 6)		// bottom box w/ status,url,
+
+	C.gtk_container_add(
+		(*C.GtkContainer)(unsafe.Pointer(window)),	// packing window to main box
+		(*C.GtkWidget)(unsafe.Pointer(mainbox)),
 	)
 
-	appWindow = &BrowserWindow{
+	C.gtk_box_pack_start(	// packing webView window to main box
+		(*C.GtkBox)(unsafe.Pointer(mainbox)),
+		(*C.GtkWidget)(unsafe.Pointer(webView)),
+		1,	// expand = true
+		1,	// fill = true
+		0,	// padding = 0
+	)
+
+	C.gtk_box_pack_start(	// packing statusLabel to bottom box
+		(*C.GtkBox)(unsafe.Pointer(bottombox)),
+		(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		0,	// expand = false
+		0,	// fill = false
+		0,	// padding = 0
+	)
+
+	C.gtk_box_pack_start(	// adding cmdEntry input area to bottom box
+		(*C.GtkBox)(unsafe.Pointer(bottombox)),
+		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
+		1,	// expand = false
+		1,	// fill = false
+		0,	// padding = 0
+	)
+
+	C.gtk_box_pack_end(		// packing bottombox to main box
+		(*C.GtkBox)(unsafe.Pointer(mainbox)),
+		(*C.GtkWidget)(unsafe.Pointer(bottombox)),
+		0,	// expand = false
+		0,	// fill = false
+		0,	// padding = 0
+	)
+
+	appWindow = &BrowserWindow{		// modify appWindow variable for return & save changes in global level
 		window: window,
 		webView: (*C.WebKitWebView)(unsafe.Pointer(webView)),
 		statusLabel: (*C.GtkWidget)(unsafe.Pointer(statusLabel)),
