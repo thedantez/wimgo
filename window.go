@@ -1,5 +1,6 @@
 package main
 
+// CGO & C-world
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.1
 #include <gtk/gtk.h>
@@ -27,8 +28,9 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	return HandleKeyPress(event->keyval, event->state);
 }
 */
-import "C"
-import (
+import "C" 	// import C-world
+
+import ( 	// import Go's libs
 	"log/slog"
 	"fmt"
 	"os"
@@ -42,6 +44,7 @@ type BrowserWindow struct {
 	statusLabel *C.GtkWidget
 	cmdEntry	*C.GtkWidget
 }
+
 
 func (b *BrowserWindow) Show() {
 	C.gtk_widget_show_all(b.window)
@@ -58,7 +61,7 @@ func (b *BrowserWindow) Scroll(deltaY int) {
 		nil, nil, nil)
 }
 
-func (b *BrowserWindow) SetStatus(text string) {
+func (b *BrowserWindow) SetStatus(text string) {	// normal/insert/command/visual
 	cText := C.CString(text)
 	defer C.free(unsafe.Pointer(cText))
 	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.statusLabel)), cText)
@@ -68,15 +71,17 @@ func init() {
 	runtime.LockOSThread()
 }
 
-var appWindow *BrowserWindow
+var appWindow *BrowserWindow	// global pointer for changes
+
 
 func NewWindow(url string) *BrowserWindow {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logger.Info("starting creating window...")
 
-	C.gtk_init(nil, nil)
 
-	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)
+	C.gtk_init(nil, nil)	// initializing GTK
+
+	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
 	C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
 	keyPress := C.CString("key-press-event")
 	defer C.free(unsafe.Pointer(keyPress))
@@ -117,7 +122,7 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
-	C.gtk_box_pack_start(
+	C.gtk_box_pack_start(	// adding webView window to box
 		(*C.GtkBox)(unsafe.Pointer(box)),
 		(*C.GtkWidget)(unsafe.Pointer(webView)),
 		1,	// expand = true
@@ -139,7 +144,7 @@ func NewWindow(url string) *BrowserWindow {
 
 	cmdEntry := C.gtk_entry_new()
 	C.gtk_widget_hide(cmdEntry)
-	C.gtk_box_pack_start(
+	C.gtk_box_pack_start(	// adding cmdEntry input area to box
 		(*C.GtkBox)(unsafe.Pointer(box)),
 		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 		0,	// expand = false
