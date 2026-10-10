@@ -71,12 +71,18 @@ func (b *BrowserWindow) SetStatus(text string) {	// normal/insert/command/visual
 func (b *BrowserWindow) OpenCommand(prefix string) {
 	cPrefix := C.CString(prefix)
 	defer C.free(unsafe.Pointer(cPrefix))
-	C.gtk_widget_show(b.cmdEntry)
+
+	// setting cmdEntry
+	C.gtk_widget_show(b.cmdEntry)	// make possible to see cmdEntry
 	C.gtk_entry_set_text(
 		(*C.GtkEntry)(unsafe.Pointer(b.cmdEntry)),
 		cPrefix,
 	)
 	C.gtk_widget_grab_focus(b.cmdEntry)
+	C.gtk_editable_set_position(
+		(*C.GtkEditable)(unsafe.Pointer(b.cmdEntry)),
+		-1,
+	)
 }
 
 
@@ -169,14 +175,49 @@ func NewWindow(url string) *BrowserWindow {
 	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(statusLabel)), C.GTK_ALIGN_START)
 
 	cmdEntry := C.gtk_entry_new()
-	C.gtk_widget_hide(cmdEntry)
+	C.gtk_widget_hide(cmdEntry)		// hide cmdEntry
+	C.gtk_entry_set_has_frame(		// edit cmdEntry's frame
+		(*C.GtkEntry)(unsafe.Pointer(cmdEntry)),
+		0,
+	)
+
+	// styling by CSS
+	cssData := `
+		entry, label {
+			border: none;
+			box-shadow: none;
+			background: transparent;
+			font-family: monospace;
+			font-size: 13px;
+			min-height: 0px;
+			margin: 0px;
+			padding: 2px 4px;
+		}
+	`
+	cCSSData := C.CString(cssData)
+	defer C.free(unsafe.Pointer(cCSSData))
+
+	cssProvider := C.gtk_css_provider_new()
+	C.gtk_css_provider_load_from_data(
+		cssProvider,
+		cCSSData,
+		-1,
+		nil,
+	)
+
+	screen := C.gdk_screen_get_default()
+	C.gtk_style_context_add_provider_for_screen(
+		screen,
+		(*C.GtkStyleProvider)(unsafe.Pointer(cssProvider)),
+		C.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION,
+	)
 
 	// packing
 	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box
 	bottombox := C.gtk_box_new(C.GTK_ORIENTATION_HORIZONTAL, 6)		// bottom box w/ status,url,
 
 	C.gtk_container_add(
-		(*C.GtkContainer)(unsafe.Pointer(window)),	// packing window to main box
+		(*C.GtkContainer)(unsafe.Pointer(window)),	// packing main box to window
 		(*C.GtkWidget)(unsafe.Pointer(mainbox)),
 	)
 
