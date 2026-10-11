@@ -18,6 +18,9 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 void on_notify_progress(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data);
 
+void on_cmd_activate(GtkEntry *entry, gpointer user_data);
+
+// dark theme, scheme, mode
 void enable_dark_theme(void);
 
 void apply_webview_dark_mode(WebKitWebView *web_view);

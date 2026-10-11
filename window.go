@@ -52,7 +52,7 @@ func (b *BrowserWindow) SetStatus(text string) {
 }
 
 
-// funcs for ModeCommand
+// funcs for ModeCommand by cmdEntry
 func (b *BrowserWindow) OpenCommand(prefix string) {
 	cPrefix := C.CString(prefix)
 	defer C.free(unsafe.Pointer(cPrefix))
@@ -81,6 +81,18 @@ func (b *BrowserWindow) CloseCommand() {
 	C.gtk_widget_grab_focus(
 		(*C.GtkWidget)(unsafe.Pointer(b.webView)),
 	)
+}
+
+//export HandleCmdActivate
+func HandleCmdActivate(cText *C.char) {
+	raw := C.GoString(cText)
+	HandleCmdEntry(raw)
+}
+
+func (b *BrowserWindow) LoadURL(url string) {
+	cURL := C.CString(url)
+	defer C.free(unsafe.Pointer(cURL))
+	C.webkit_web_view_load_uri(b.webView, cURL)
 }
 
 // funcs for infoLabel
@@ -142,22 +154,13 @@ func NewWindow(url string) *BrowserWindow {
 	defer C.free(unsafe.Pointer(cTitle))
 	C.gtk_window_set_title((*C.GtkWindow)(unsafe.Pointer(window)), cTitle)
 
-	cSignalDestroy := C.CString("destroy")	// destroy when window was closed
-	defer C.free(unsafe.Pointer(cSignalDestroy))
-	C.g_signal_connect_data(	// connect w/ C-world
-		C.gpointer(window),
-		(*C.gchar)(unsafe.Pointer(cSignalDestroy)),
-		C.GCallback(C.gtk_main_quit),
-		nil, nil, 0,
-	)
-
 	// engine: WebKit
 	webView := C.webkit_web_view_new()	// window for view web
 
 	//C.enable_dark_theme() 	// setting dark theme
 	//C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
 	//C.inject_dark_mode_css((*C.WebKitWebView)(unsafe.Pointer(webView)))
-	initDarkScript := darkReaderJS + "\nDarkReader.enable({brightness: 100, contrast: 90, sepia: 0});"
+	initDarkScript := darkReaderJS + "\nDarkReader.enable({brightness: 100, contrast: 50, sepia: 0});"
 	cScript := C.CString(initDarkScript)
 	defer C.free(unsafe.Pointer(cScript))
 	C.inject_dark_reader((*C.WebKitWebView)(unsafe.Pointer(webView)), cScript)
@@ -189,6 +192,15 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
+	cSignalDestroy := C.CString("destroy")	// destroy when window was closed
+	defer C.free(unsafe.Pointer(cSignalDestroy))
+	C.g_signal_connect_data(	// connect w/ C-world
+		C.gpointer(window),
+		(*C.gchar)(unsafe.Pointer(cSignalDestroy)),
+		C.GCallback(C.gtk_main_quit),
+		nil, nil, 0,
+	)
+
 	// loading url
 	cURL := C.CString(url)
 	defer C.free(unsafe.Pointer(cURL))
@@ -209,6 +221,15 @@ func NewWindow(url string) *BrowserWindow {
 	C.gtk_entry_set_has_frame(		// edit cmdEntry's frame
 		(*C.GtkEntry)(unsafe.Pointer(cmdEntry)),
 		0,
+	)
+
+	cSignalActivate := C.CString("activate")	// handler cmdEntry for entering commands
+	defer C.free(unsafe.Pointer(cSignalActivate))
+	C.g_signal_connect_data(
+		C.gpointer(cmdEntry),
+		(*C.gchar)(unsafe.Pointer(cSignalActivate)),
+		C.GCallback(C.on_cmd_activate),
+		nil, nil, 0,
 	)
 
 	cURLText := C.CString(url)
@@ -242,6 +263,28 @@ func NewWindow(url string) *BrowserWindow {
 			margin: 0px;
 			padding: 2px 4px;
 		}
+		#bottom-bar {
+			color: #ffffff;
+			background-color: #000000;
+			border-top: 1px solid #313244;
+			padding: 2px 4px;
+		}
+		#bottom-bar label {
+			color: #ffffff
+			font-family: monospace;
+			font-size: 13px;
+			padding: 0 4px;
+		}
+		#bottom-bar entry {
+			background: transparent;
+			color: #ffffff;
+			font-family: monospace;
+			font-size: 13px;
+			border: none;
+			box-shadow: none;
+			padding: 0;
+			margin: 0;
+		}
 	`
 	cCSSData := C.CString(cssData)
 	defer C.free(unsafe.Pointer(cCSSData))
@@ -264,6 +307,12 @@ func NewWindow(url string) *BrowserWindow {
 	// packing
 	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box
 	bottombox := C.gtk_box_new(C.GTK_ORIENTATION_HORIZONTAL, 6)		// bottom box w/ status,url,
+	cBottomBarID := C.CString("bottom-bar")
+	defer C.free(unsafe.Pointer(cBottomBarID))
+	C.gtk_widget_set_name(
+		(*C.GtkWidget)(unsafe.Pointer(bottombox)),
+		cBottomBarID,
+	)
 
 	C.gtk_container_add(
 		(*C.GtkContainer)(unsafe.Pointer(window)),	// packing main box to window

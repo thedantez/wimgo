@@ -32,6 +32,14 @@ void on_notify_progress(WebKitWebView *web_view,
 	UpdateLoadProgress(progress);
 }
 
+void on_cmd_activate(GtkEntry *entry,
+                     gpointer user_data) {
+    const gchar *text = gtk_entry_get_text(entry);
+    if (text != NULL) {
+        HandleCmdActivate((const char *)text);
+    }
+}
+
 void enable_dark_theme(void) {
     GtkSettings *settings = gtk_settings_get_default();
     if (settings != NULL) {

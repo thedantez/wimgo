@@ -6,6 +6,7 @@ package main
 import "C"
 import (
 	"log/slog"
+	"os"
 )
 
 //export HandleKeyPress
@@ -36,6 +37,14 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 			appWindow.OpenCommand(":open ")
 			appWindow.SetStatus("[COMMAND] ")
 			slog.Info("detected o")
+		case 58:	// :
+			currentMode = ModeCommand
+			appWindow.OpenCommand(":")
+			appWindow.SetStatus("[COMMAND] ")
+			slog.Info("detected :")
+		case 113:	// q
+			slog.Info("exitign...")
+			os.Exit(0)
 		}
 		return C.TRUE
 	default:	// ModeInsert/ModeVisible/ModeCommand
