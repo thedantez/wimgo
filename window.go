@@ -13,7 +13,8 @@ import ( 	// import Go's libs
 	"fmt"
 	"os"
 	"runtime"
-	"unsafe"
+	"unsafe"	// for c-world injections
+	_ "embed"	// for dark reader
 )
 
 type BrowserWindow struct {
@@ -114,7 +115,9 @@ func init() {
 	runtime.LockOSThread()
 }
 
-var appWindow *BrowserWindow	// global pointer for changes
+var appWindow *BrowserWindow	// global pointer for changes in window & ui
+//go:embed darkreader.min.js
+var darkReaderJS string			// global pointer for dark reader
 
 func NewWindow(url string) *BrowserWindow {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))		// creating stuctured logs
@@ -148,10 +151,16 @@ func NewWindow(url string) *BrowserWindow {
 		nil, nil, 0,
 	)
 
-	C.enable_dark_theme() 	// setting dark theme
-
 	// engine: WebKit
 	webView := C.webkit_web_view_new()	// window for view web
+
+	//C.enable_dark_theme() 	// setting dark theme
+	//C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
+	//C.inject_dark_mode_css((*C.WebKitWebView)(unsafe.Pointer(webView)))
+	initDarkScript := darkReaderJS + "\nDarkReader.enable({brightness: 100, contrast: 90, sepia: 0});"
+	cScript := C.CString(initDarkScript)
+	defer C.free(unsafe.Pointer(cScript))
+	C.inject_dark_reader((*C.WebKitWebView)(unsafe.Pointer(webView)), cScript)
 
 	cSignalFailed := C.CString("load-failed")		// if web can't load
 	defer C.free(unsafe.Pointer(cSignalFailed))

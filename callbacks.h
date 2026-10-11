@@ -20,4 +20,7 @@ void on_notify_progress(WebKitWebView *web_view, GParamSpec *pspec, gpointer use
 
 void enable_dark_theme(void);
 
+void apply_webview_dark_mode(WebKitWebView *web_view);
+
+void inject_dark_reader(WebKitWebView *web_view, const char *js_code);
 #endif
