@@ -45,6 +45,12 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		case 113:	// q
 			slog.Info("exitign...")
 			os.Exit(0)
+		case 114: 	// r
+			appWindow.Reload()
+			slog.Info("detected r")
+		case 82:	// R
+			appWindow.ReloadBypassCache()
+			slog.Info("detected R")
 		}
 		return C.TRUE
 	default:	// ModeInsert/ModeVisible/ModeCommand

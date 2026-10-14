@@ -34,6 +34,16 @@ func (b *BrowserWindow) Show() {
 }
 
 
+// func for reload sites
+func (b *BrowserWindow) Reload() {		// like soft reload (use saved data from cache if it wasn't changed)
+	C.webkit_web_view_reload(b.webView)
+}
+
+func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload site)
+	C.webkit_web_view_reload_bypass_cache(b.webView)
+}
+
+
 // func(-s) to scrolling
 func (b *BrowserWindow) Scroll(deltaY int) {		// need to add scroll by Ox: create new func or modify this func
 	jsScript := C.CString(fmt.Sprintf("window.scrollBy(0, %d)", (deltaY * 100)))

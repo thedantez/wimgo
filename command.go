@@ -52,6 +52,16 @@ func ExecuteCommand(cmd string, args []string) {
 		}
 		target := strings.Join(args, " ")
 		OpenUrl(target)
+	case "reload", "r":
+		if appWindow != nil {
+			appWindow.Reload()
+			slog.Info("reloading site...")
+		}
+	case "reload!", "r!":
+		if appWindow != nil {
+			appWindow.ReloadBypassCache()
+			slog.Info("reloading site w/ bypass cache...")
+		}
 	default:
 		slog.Warn("unknown command", "cmd", cmd)
 	}

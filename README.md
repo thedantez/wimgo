@@ -21,12 +21,16 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `i` | switch to Insert mode |
 | `v` | switch to Visual mode (now not work) |
 | `esc` | return to Normal mode / close command prompt |
+| `r` | reload site (like soft reload: use unchanged data from cache) |
+| `R` | hard reload site (full reload site) |
 
 # commands
 | command | action |
 | :---: | :---: |
 | `:q`/`:quit` | close window |
 | `:o`/`:open` | open url |
+| `:r`/`:reload` | reload site (like like soft reload: use unchanged data from cache)
+| `:r!`/`:reload!` | hard reload site (full reload site) |
 
 # dependencies
 make sure u've GTK3 & WebKitGTK installed:
