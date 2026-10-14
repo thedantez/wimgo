@@ -280,7 +280,7 @@ func NewWindow(url string) *BrowserWindow {
 			padding: 2px 4px;
 		}
 		#bottom-bar label {
-			color: #ffffff
+			color: #ffffff;
 			font-family: monospace;
 			font-size: 13px;
 			padding: 0 4px;
@@ -313,6 +313,7 @@ func NewWindow(url string) *BrowserWindow {
 		(*C.GtkStyleProvider)(unsafe.Pointer(cssProvider)),
 		C.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION,
 	)
+	C.g_object_unref(C.gpointer(cssProvider))
 
 	// packing
 	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box

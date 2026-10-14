@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 	"log/slog"
-	"os"
+	//"os"
 )
 
 func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & parse it
@@ -44,7 +44,8 @@ func ExecuteCommand(cmd string, args []string) {
 	switch cmd {
 	case "q", "quit":
 		slog.Info("executing quit command")
-		os.Exit(0)
+		//os.Exit(0)	// hard exit
+		C.gtk_main_quit() 	// soft exit
 	case "open", "o":
 		if len(args) == 0 {
 			slog.Warn("open command requires a url")
