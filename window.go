@@ -14,7 +14,6 @@ import ( 	// import Go's libs
 	"os"
 	"runtime"
 	"unsafe"	// for c-world injections
-	_ "embed"	// for dark reader
 )
 
 type BrowserWindow struct {
@@ -135,11 +134,10 @@ func UpdateLoadProgress(progress float64) {
 // func for start GTK
 func init() {
 	runtime.LockOSThread()
+	os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 }
 
 var appWindow *BrowserWindow	// global pointer for changes in window & ui
-//go:embed darkreader.min.js
-var darkReaderJS string			// global pointer for dark reader
 
 func NewWindow(url string) *BrowserWindow {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))		// creating stuctured logs
@@ -147,6 +145,7 @@ func NewWindow(url string) *BrowserWindow {
 
 	// main window GTK
 	C.gtk_init(nil, nil)	// initializing GTK
+	C.enable_dark_theme() 	// setting dark theme
 
 	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
 	C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
@@ -166,14 +165,6 @@ func NewWindow(url string) *BrowserWindow {
 
 	// engine: WebKit
 	webView := C.webkit_web_view_new()	// window for view web
-
-	//C.enable_dark_theme() 	// setting dark theme
-	//C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
-	//C.inject_dark_mode_css((*C.WebKitWebView)(unsafe.Pointer(webView)))
-	initDarkScript := darkReaderJS + "\nDarkReader.enable({brightness: 100, contrast: 50, sepia: 0});"
-	cScript := C.CString(initDarkScript)
-	defer C.free(unsafe.Pointer(cScript))
-	C.inject_dark_reader((*C.WebKitWebView)(unsafe.Pointer(webView)), cScript)
 
 	cSignalFailed := C.CString("load-failed")		// if web can't load
 	defer C.free(unsafe.Pointer(cSignalFailed))
@@ -209,15 +200,6 @@ func NewWindow(url string) *BrowserWindow {
 		(*C.gchar)(unsafe.Pointer(cSignalDestroy)),
 		C.GCallback(C.gtk_main_quit),
 		nil, nil, 0,
-	)
-
-	// loading url
-	cURL := C.CString(url)
-	defer C.free(unsafe.Pointer(cURL))
-
-	C.webkit_web_view_load_uri(
-		(*C.WebKitWebView)(unsafe.Pointer(webView)),
-		cURL,
 	)
 
 	// creating bottom (status, command) bar, infolabel
@@ -315,6 +297,9 @@ func NewWindow(url string) *BrowserWindow {
 	)
 	C.g_object_unref(C.gpointer(cssProvider))
 
+	// style: enabling dark theme & dark mode
+	C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
+
 	// packing
 	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box
 	bottombox := C.gtk_box_new(C.GTK_ORIENTATION_HORIZONTAL, 6)		// bottom box w/ status,url,
@@ -370,6 +355,16 @@ func NewWindow(url string) *BrowserWindow {
 		0,	// padding = 0
 	)
 
+	// loading url
+	cURL := C.CString(url)
+	defer C.free(unsafe.Pointer(cURL))
+
+	C.webkit_web_view_load_uri(
+		(*C.WebKitWebView)(unsafe.Pointer(webView)),
+		cURL,
+	)
+
+	// creating appWindow global variable & pack all
 	appWindow = &BrowserWindow{		// modify appWindow variable for return & save changes in global level
 		window: 		window,
 		webView: 		(*C.WebKitWebView)(unsafe.Pointer(webView)),

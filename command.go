@@ -1,5 +1,9 @@
 package main
 
+/*
+#include <gtk/gtk.h>
+*/
+import "C"
 import (
 	"strings"
 	"log/slog"

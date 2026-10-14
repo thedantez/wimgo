@@ -9,14 +9,14 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 # features
 - **modal ui (vim-like)** : modes (`normal`, `insert`, `command`, `visual`(in progress))
 - **minimalist statusbar** : flat monochrome command entry & laod progress indicator
-- **embedded dark mode** : integrated Dark Reader engine by JS injection
+- **native dark mode** : via GTK & WebKit settings
 - **fast navigation** : url normalization & quick command execution
 
 # keybindings
 | key | action |
 | :---: | :---: |
 | `j`/`k` | scroll down/up |
-| `o` | open command prompt w/ `:open`
+| `o` | open command prompt w/ `:open` |
 | `:` | open clean command prompt |
 | `i` | switch to Insert mode |
 | `v` | switch to Visual mode (now not work) |
@@ -42,7 +42,7 @@ sudo pacman -S base-devel go gtk3 webkit2gtk-4.1 # or u can use yay
 
 **debian-based**
 ```bash
-sudo apt isntall build-essential golang libgtk-3-dev libwebkit2gtk-4.1-dev
+sudo apt install build-essential golang libgtk-3-dev libwebkit2gtk-4.1-dev
 ```
 
 # building & running

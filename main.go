@@ -11,11 +11,6 @@ import (
 	"os"
 )
 
-//type BrowserWindow struct {
-//	window 	*C.GtkWidget
-//	webView *C.WebKitWebView
-//}
-
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logger.Info("starting wimgo...")

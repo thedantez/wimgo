@@ -49,20 +49,25 @@ void enable_dark_theme(void) {
 
 void apply_webview_dark_mode(WebKitWebView *web_view) {     // 0 =no_preference, 1=light, 2=dark
     WebKitSettings *settings = webkit_web_view_get_settings(web_view);
+    WebKitWebContext *context = webkit_web_view_get_context(web_view);
+    webkit_web_context_set_cache_model(context, WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
     if (settings != NULL) {
         if (g_object_class_find_property(G_OBJECT_GET_CLASS(settings), "color-scheme")) {
             g_object_set(G_OBJECT(settings), "color-scheme", 2, NULL);
         }
+        webkit_settings_set_enable_webgl(settings, FALSE);
+        webkit_settings_set_enable_media_stream(settings, FALSE);
+        webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
     }
 }
 
-void inject_dark_reader(WebKitWebView *web_view, const char *js_code) {
+void inject_js(WebKitWebView *web_view, const char *js_code) {
     WebKitUserContentManager *manager = webkit_web_view_get_user_content_manager(web_view);
     if (!manager) return;
 
     WebKitUserScript *script = webkit_user_script_new(
             js_code,
-            WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
+            WEBKIT_USER_CONTENT_INJECT_TOP_FRAME,   // or WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES
             WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_END,
             NULL,
             NULL
