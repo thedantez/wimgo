@@ -90,7 +90,15 @@ func OpenUrl(rawURL string) {
 	}
 
 	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
-		target = "https://" + target
+		if strings.Contains(target, " ") {
+			target = "https://google.com/search?q=" + target
+		} else {
+			if strings.Contains(target, ".") && !strings.HasPrefix(target, ".") && !strings.HasSuffix(target, ".") {
+				target = "https://" + target
+			} else {
+				target = "https://google.com/search?q=" + target
+			}
+		}
 	}
 
 	slog.Info("navigatin to URL", "url", target)

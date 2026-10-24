@@ -354,8 +354,8 @@ func NewWindow(url string) *BrowserWindow {
 	C.gtk_box_pack_start(	// packing cmdEntry input area to bottom box
 		(*C.GtkBox)(unsafe.Pointer(bottombox)),
 		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
-		1,	// expand = false
-		1,	// fill = false
+		1,	// expand = true
+		1,	// fill = true
 		0,	// padding = 0
 	)
 
@@ -364,7 +364,7 @@ func NewWindow(url string) *BrowserWindow {
 		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
 		0,	// expand = false
 		0,	// fill = false
-		4,	// padding = 0
+		4,	// padding = 4
 	)
 
 	C.gtk_box_pack_end(		// packing bottombox to main box
