@@ -52,6 +52,12 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		case 82:	// R
 			appWindow.ReloadBypassCache()
 			slog.Info("detected R")
+		case 72:	// H
+			appWindow.GoBack()
+			slog.Info("detected H")
+		case 76:	// L
+			appWindow.GoForward()
+			slog.Info("detected L")
 		}
 		return C.TRUE
 	default:	// ModeInsert/ModeVisible/ModeCommand

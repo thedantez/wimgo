@@ -23,6 +23,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `esc` | return to Normal mode / close command prompt |
 | `r` | reload site (like soft reload: use unchanged data from cache) |
 | `R` | hard reload site (full reload site) |
+| `H`/`L` | go back/forward history |
 
 # commands
 | command | action |
@@ -31,6 +32,8 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `:o`/`:open` | open url |
 | `:r`/`:reload` | reload site (like like soft reload: use unchanged data from cache)
 | `:r!`/`:reload!` | hard reload site (full reload site) |
+| `:b`/`:back` | go back history |
+| `:f`/`:forward` | go forward history |
 
 # dependencies
 make sure u've GTK3 & WebKitGTK installed:

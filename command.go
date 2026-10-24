@@ -67,6 +67,16 @@ func ExecuteCommand(cmd string, args []string) {
 			appWindow.ReloadBypassCache()
 			slog.Info("reloading site w/ bypass cache...")
 		}
+	case "b", "back":
+		if appWindow != nil {
+			appWindow.GoBack()
+			slog.Info("go back history")
+		}
+	case "f", "forward":
+		if appWindow != nil {
+			appWindow.GoForward()
+			slog.Info("go forward history")
+		}
 	default:
 		slog.Warn("unknown command", "cmd", cmd)
 	}

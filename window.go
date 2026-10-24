@@ -92,6 +92,26 @@ func (b *BrowserWindow) CloseCommand() {
 	)
 }
 
+func (b *BrowserWindow) GoBack() {
+	can_go_back := C.webkit_web_view_can_go_back(b.webView)
+	if can_go_back != 0 {
+		C.webkit_web_view_go_back(b.webView)
+		slog.Info("go back history")
+	} else {
+		slog.Info("can't go back history")
+	}
+}
+
+func (b *BrowserWindow) GoForward() {
+	can_go_forward := C.webkit_web_view_can_go_forward(b.webView)
+	if can_go_forward != 0 {
+		C.webkit_web_view_go_forward(b.webView)
+		slog.Info("go forward history")
+	} else {
+		slog.Info("can't go forward history")
+	}
+}
+
 //export HandleCmdActivate
 func HandleCmdActivate(cText *C.char) {
 	raw := C.GoString(cText)
