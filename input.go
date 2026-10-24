@@ -62,10 +62,10 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.Scroll(count, 0)
 	case "h":
 		appWindow.Scroll(-count, 0)
-	//case "gg":
-	//	appWindow.ScrollToTop()
-	//case "G", "gG":
-	//	appWindow.ScrollToBottom()
+	case "gg":
+		appWindow.ScrollToTop()
+	case "G", "gG":
+		appWindow.ScrollToBottom()
 	case "r":
 		appWindow.Reload()
 	case "R":

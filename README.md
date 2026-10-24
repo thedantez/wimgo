@@ -16,6 +16,9 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | key | action |
 | :---: | :---: |
 | `j`/`k` | scroll down/up |
+| `gg` | go to page's top |
+| `gG`/`G` | go to page's bottom |
+| `H`/`L` | go back/forward history |
 | `o` | open command prompt w/ `:open` |
 | `:` | open clean command prompt |
 | `i` | switch to Insert mode |
@@ -23,7 +26,6 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `esc` | return to Normal mode / close command prompt |
 | `r` | reload site (like soft reload: use unchanged data from cache) |
 | `R` | hard reload site (full reload site) |
-| `H`/`L` | go back/forward history |
 
 # commands
 | command | action |
@@ -68,7 +70,7 @@ go run .
 
 [x] command prompt (`:open`, `:quit`)
 
-[ ] smart search handling
+[x] smart search handling
 
 [ ] configuration file support (config.?)
 

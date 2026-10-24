@@ -53,6 +53,24 @@ func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by O
 		nil, nil, nil)
 }
 
+func (b *BrowserWindow) ScrollToTop() {
+	jsScript := C.CString("window.scrollTo(0, 0)")
+	defer C.free(unsafe.Pointer(jsScript))
+	C.webkit_web_view_run_javascript(
+		b.webView,
+		jsScript,
+		nil, nil, nil)
+}
+
+func (b *BrowserWindow) ScrollToBottom() {
+	jsScript := C.CString("window.scrollTo(0, document.body.scrollHeight)")
+	defer C.free(unsafe.Pointer(jsScript))
+	C.webkit_web_view_run_javascript(
+		b.webView,
+		jsScript,
+		nil, nil, nil)
+}
+
 // func for modify statusLabel by normal/insert/command/visual
 func (b *BrowserWindow) SetStatus(text string) {
 	cText := C.CString(text)
