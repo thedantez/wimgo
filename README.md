@@ -26,6 +26,9 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `esc` | return to Normal mode / close command prompt |
 | `r` | reload site (like soft reload: use unchanged data from cache) |
 | `R` | hard reload site (full reload site) |
+| `-`/`zo` | zoom out |
+| `+`/`zi` | zoom in |
+| `=`/`zz` | reset zoom |
 
 # commands
 | command | action |

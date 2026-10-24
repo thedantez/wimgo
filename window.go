@@ -71,6 +71,23 @@ func (b *BrowserWindow) ScrollToBottom() {
 		nil, nil, nil)
 }
 
+
+// funcs to change zoom
+func (b *BrowserWindow) ZoomIn() {
+	zoomLevel := C.webkit_web_view_get_zoom_level(b.webView)
+	C.webkit_web_view_set_zoom_level(b.webView, zoomLevel + 0.25)
+}
+
+func (b *BrowserWindow) ZoomOut() {
+	zoomLevel := C.webkit_web_view_get_zoom_level(b.webView)
+	C.webkit_web_view_set_zoom_level(b.webView, zoomLevel - 0.25)
+}
+
+func (b *BrowserWindow) ResetZoom() {
+	C.webkit_web_view_set_zoom_level(b.webView, 1)
+}
+
+
 // func for modify statusLabel by normal/insert/command/visual
 func (b *BrowserWindow) SetStatus(text string) {
 	cText := C.CString(text)

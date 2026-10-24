@@ -8,7 +8,6 @@ import (
 	"time"
 	"strconv"
 	"log/slog"
-	//"os"
 )
 
 var (
@@ -49,7 +48,7 @@ func splitCountAndCmd(buf string) (int, string) {
 func processNormalChord(buf string) (done bool, pending bool) {
 	count, cmd := splitCountAndCmd(buf)
 
-	if cmd == "" || cmd == "g" {
+	if cmd == "" || cmd == "g" || cmd == "z" {
 		return false, true
 	}
 
@@ -74,6 +73,12 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.GoBack()
 	case "L":
 		appWindow.GoForward()
+	case "zi", "+":
+		appWindow.ZoomIn()
+	case "zo", "-":
+		appWindow.ZoomOut()
+	case "zz", "=":
+		appWindow.ResetZoom()
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}
@@ -103,26 +108,6 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					appWindow.SetStatus("[VISIBLE] ")
 					slog.Info("mode switched to VISIBLE")
 					return C.TRUE
-				//case 106: 	// j
-				//slog.Info("detected j")
-				//if appWindow != nil {
-				//	appWindow.Scroll(0, 1) // scroll to down
-				//}
-				//case 107:	// k
-				//slog.Info("detected k")
-				//if appWindow != nil {
-				//	appWindow.Scroll(0, -1) // scroll to up
-				//}
-				//case 108:	// l
-				//slog.Info("detected l")
-				//if appWindow != nil {
-				//	appWindow.Scroll(1, 0)
-				//}
-				//case 104:	// h
-				//slog.Info("detected h")
-				//if appWindow != nil {
-				//	appWindow.Scroll(-1, 0)
-				//}
 				case 111:	// o
 					currentMode = ModeCommand
 					appWindow.OpenCommand(":open ")
@@ -135,22 +120,6 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					appWindow.SetStatus("[COMMAND] ")
 					slog.Info("detected :")
 					return C.TRUE
-				//case 113:	// q
-				//	slog.Info("exitign...")
-				//	//os.Exit(0)		// hard exit
-				//	C.gtk_main_quit()	// soft exit
-				//case 114: 	// r
-				//appWindow.Reload()
-				//slog.Info("detected r")
-				//case 82:	// R
-				//appWindow.ReloadBypassCache()
-				//slog.Info("detected R")
-				//case 72:	// H
-				//appWindow.GoBack()
-				//slog.Info("detected H")
-				//case 76:	// L
-				//appWindow.GoForward()
-				//slog.Info("detected L")
 			}
 		}
 		if keyval >= 32 && keyval <= 126 {
