@@ -44,8 +44,8 @@ func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload s
 
 
 // func(-s) to scrolling
-func (b *BrowserWindow) Scroll(deltaY int) {		// need to add scroll by Ox: create new func or modify this func
-	jsScript := C.CString(fmt.Sprintf("window.scrollBy(0, %d)", (deltaY * 100)))
+func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by Ox: create new func or modify this func
+	jsScript := C.CString(fmt.Sprintf("window.scrollBy(%d, %d)", (deltaX * 100), (deltaY * 100)))
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
 		b.webView,

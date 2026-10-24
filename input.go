@@ -25,12 +25,22 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		case 106: 	// j
 			slog.Info("detected j")
 			if appWindow != nil {
-				appWindow.Scroll(1) // scroll to down
+				appWindow.Scroll(0, 1) // scroll to down
 			}
 		case 107:	// k
 			slog.Info("detected k")
 			if appWindow != nil {
-				appWindow.Scroll(-1) // scroll to up
+				appWindow.Scroll(0, -1) // scroll to up
+			}
+		case 108:	// l
+			slog.Info("detected l")
+			if appWindow != nil {
+				appWindow.Scroll(1, 0)
+			}
+		case 104:	// h
+			slog.Info("detected h")
+			if appWindow != nil {
+				appWindow.Scroll(-1, 0)
 			}
 		case 111:	// o
 			currentMode = ModeCommand
