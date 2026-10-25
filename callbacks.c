@@ -15,6 +15,7 @@ void on_load_changed(WebKitWebView *web_view,
                      gpointer user_data) {
 	if (load_event == WEBKIT_LOAD_FINISHED) {
 		g_print("[WebKit] Page load finished: %s\n", webkit_web_view_get_uri(web_view));
+        ResetHintsState();
 	}
 }
 
@@ -30,6 +31,20 @@ void on_notify_progress(WebKitWebView *web_view,
                         gpointer user_data) {
 	double progress = webkit_web_view_get_estimated_load_progress(web_view);
 	UpdateLoadProgress(progress);
+}
+
+void on_notify_title(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data) {
+    const gchar *title = webkit_web_view_get_title(web_view);
+    if (title == NULL) return;
+
+    if (g_strcmp0(title, "__wimgo_hint_done__") == 0) {
+        FinishHintAction(0); // 0 = ModeNormal
+        return;
+    }
+    if (g_strcmp0(title, "__wimgo_hint_insert__") == 0) {
+        FinishHintAction(1); // 1 = ModeInsert
+        return;
+    }
 }
 
 void on_cmd_activate(GtkEntry *entry,

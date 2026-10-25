@@ -7,11 +7,12 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
 
 # features
-- **modal ui (vim-like)** : modes (`normal`, `insert`, `command`, `visual`(in progress))
+- **modal ui** : modes (`normal`, `insert`, `command`, `visual`(in progress))
 - **minimalist statusbar** : flat monochrome command entry & laod progress indicator
 - **native dark mode** : via GTK & WebKit settings
-- **fast navigation** : url normalization & quick command execution
+- **fast work** : quick command execution & native work in linux via GTK
 - **dynamic configuration** : line-by-line evaluated config file (`~/.config/wimgo/config`)
+- **vim-like navigation** : shows hints to emulate mouse clicks
 
 # keybindings
 | key | action |
@@ -30,6 +31,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `-`/`zo` | zoom out |
 | `+`/`zi` | zoom in |
 | `=`/`zz` | reset zoom |
+| `f` | show hints |
 
 # commands
 | command | action |

@@ -63,6 +63,8 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.ScrollToTop()
 	case "G", "gG":
 		appWindow.ScrollToBottom()
+	case "f":
+		StartHints()
 	case "r":
 		appWindow.Reload()
 	case "R":
@@ -137,6 +139,16 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					resetKeyBuffer()
 				})
 			}
+		}
+		return C.TRUE
+	case 4:		// ModeHints
+		if keyval == 0xff1b {		// escape
+			ExitHints()
+			slog.Info("mode switched to NORMAL")
+		}
+		if keyval >= 32 && keyval <= 126 {
+			ProcessHintKey(rune(keyval))
+			return C.TRUE
 		}
 		return C.TRUE
 	default:	// ModeInsert/ModeVisible/ModeCommand

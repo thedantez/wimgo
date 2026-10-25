@@ -192,6 +192,16 @@ func init() {
 	os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 }
 
+// func for inject JS
+func (b *BrowserWindow) RunJS(script string) {
+	cScript := C.CString(script)
+	defer C.free(unsafe.Pointer(cScript))
+	C.webkit_web_view_run_javascript(
+		b.webView,
+		cScript,
+		nil, nil, nil)
+}
+
 var appWindow *BrowserWindow	// global pointer for changes in window & ui
 
 func NewWindow(url string) *BrowserWindow {
@@ -235,6 +245,15 @@ func NewWindow(url string) *BrowserWindow {
 		C.gpointer(webView),
 		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
 		C.GCallback(C.on_load_changed),
+		nil, nil, 0,
+	)
+
+	cSignalTitle := C.CString("notify::title")
+	defer C.free(unsafe.Pointer(cSignalTitle))
+	C.g_signal_connect_data(
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalTitle)),
+		C.GCallback(C.on_notify_title),
 		nil, nil, 0,
 	)
 

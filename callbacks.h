@@ -25,5 +25,7 @@ void enable_dark_theme(void);
 
 void apply_webview_dark_mode(WebKitWebView *web_view);
 
+void on_notify_title(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data);
+
 void inject_js(WebKitWebView *web_view, const char *js_code);
 #endif

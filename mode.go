@@ -6,6 +6,7 @@ const (
 	ModeInsert			// 1
 	ModeVisible			// 2
 	ModeCommand			// 3
+	ModeHints			// 4
 )
 var currentMode = ModeNormal
 
@@ -19,6 +20,8 @@ func (m Mode) String() string {
 		return "VISIBLE"
 	case ModeCommand:
 		return "COMMAND"
+	case ModeHints:
+		return "HINTS"
 	default:
 		return "UNKNOWN"
 	}
