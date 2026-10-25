@@ -11,6 +11,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 - **minimalist statusbar** : flat monochrome command entry & laod progress indicator
 - **native dark mode** : via GTK & WebKit settings
 - **fast navigation** : url normalization & quick command execution
+- **dynamic configuration** : line-by-line evaluated config file (`~/.config/wimgo/config`)
 
 # keybindings
 | key | action |
@@ -39,6 +40,19 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `:r!`/`:reload!` | hard reload site (full reload site) |
 | `:b`/`:back` | go back history |
 | `:f`/`:forward` | go forward history |
+| `:set <key> <val>` | change configuration setting |
+| `:config-save` | save current configuration to `~/.config/wimgo/config` |
+| `:config-load` | load configuration from `~/.config/wimgo/config` |
+
+# configuration
+wimgo uses a plain text command-driven configuration file located at `~/.config/wimgo/config` (creating in first start)
+```wimgo
+# wimgo configuration file
+set homePage https://google.com
+set searchEngine https://google.com/search?q=
+set scrollStep 100
+set chordTimeout 1200
+```
 
 # dependencies
 make sure u've GTK3 & WebKitGTK installed:
@@ -71,14 +85,12 @@ go run .
 
 [x] FSM keyboard navigation
 
-[x] command prompt (`:open`, `:quit`)
+[x] command prompt (`:open`, `:quit`, `:set`)
 
 [x] smart search handling
 
-[ ] configuration file support (config.?)
+[x] configuration file support
 
 [ ] gRPC bridge & core daemon separation
 
 [ ] tab & session management
-
-

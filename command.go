@@ -7,7 +7,7 @@ import "C"
 import (
 	"strings"
 	"log/slog"
-	//"os"
+	"strconv"
 )
 
 func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & parse it
@@ -50,19 +50,19 @@ func ExecuteCommand(cmd string, args []string) {
 		slog.Info("executing quit command")
 		//os.Exit(0)	// hard exit
 		C.gtk_main_quit() 	// soft exit
-	case "open", "o":
+	case "o", "open":
 		if len(args) == 0 {
 			slog.Warn("open command requires a url")
 			return
 		}
 		target := strings.Join(args, " ")
 		OpenUrl(target)
-	case "reload", "r":
+	case "r", "reload":
 		if appWindow != nil {
 			appWindow.Reload()
 			slog.Info("reloading site...")
 		}
-	case "reload!", "r!":
+	case "r!", "reload!":
 		if appWindow != nil {
 			appWindow.ReloadBypassCache()
 			slog.Info("reloading site w/ bypass cache...")
@@ -77,6 +77,39 @@ func ExecuteCommand(cmd string, args []string) {
 			appWindow.GoForward()
 			slog.Info("go forward history")
 		}
+	case "set":
+		if len(args) < 2 {
+			slog.Warn("command set requires key & value")
+			return
+		}
+		switch args[0] {
+			case "scrollStep", "scrollstep", "scroll_step":
+				if val, err := strconv.Atoi(args[1]); err == nil && val > 0 {
+					appConfig.ScrollStep = val
+					slog.Info("set config parameter", "param", "scrollStep", "val", val)
+				}
+			case "homePage", "homepage", "home_page":
+				appConfig.HomePage = args[1]
+				slog.Info("set config parameter", "param", "homePage", "val", args[1])
+			case "searchEngine", "searchengine", "search_engine":
+				appConfig.SearchEngine = args[1]
+				slog.Info("set config parameter", "param", "searchEngine", "val", args[1])
+			case "chordTimeout", "chordtimeout", "chord_timeout":
+				if val, err := strconv.Atoi(args[1]); err == nil && val > 0 {
+					appConfig.ChordTimeout = val
+					slog.Info("set config parameter", "param", "chordTimeout", "val", val)
+				} else {
+					slog.Warn("invalid value for chordTimeout", "arg", args[1])
+				}
+			default:
+				slog.Info("unknown args for command set ", "value", args[0], "args", args[1])
+		}
+	case "config-save":
+		SaveConfig()
+		slog.Info("config saved")
+	case "config-load":
+		LoadConfig()
+		slog.Info("config loaded")
 	default:
 		slog.Warn("unknown command", "cmd", cmd)
 	}
@@ -91,12 +124,12 @@ func OpenUrl(rawURL string) {
 
 	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
 		if strings.Contains(target, " ") {
-			target = "https://google.com/search?q=" + target
+			target = appConfig.SearchEngine + target
 		} else {
 			if strings.Contains(target, ".") && !strings.HasPrefix(target, ".") && !strings.HasSuffix(target, ".") {
 				target = "https://" + target
 			} else {
-				target = "https://google.com/search?q=" + target
+				target = appConfig.SearchEngine + target
 			}
 		}
 	}

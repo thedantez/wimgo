@@ -8,15 +8,14 @@ package main
 import "C"
 import (
 	"log/slog"
-	"os"
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	logger.Info("starting wimgo...")
+	slog.Info("starting wimgo...")
 
-	win :=	NewWindow("https://duckduckgo.com")
+	LoadConfig()
+	win :=	NewWindow(appConfig.HomePage)
 	win.Show()
 
-	logger.Info("window opened, entering into main cycle GTK events")
+	slog.Info("window opened, entering into main cycle GTK events")
 }

@@ -16,8 +16,6 @@ var (
 	statusDirty bool
 )
 
-const chordTimeout = 1200 * time.Millisecond	// 1.2 seconds to finish combination
-
 func resetKeyBuffer() {
 	keyBuffer = ""
 	if chordTimer != nil {
@@ -121,6 +119,7 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					slog.Info("detected :")
 					return C.TRUE
 			}
+			resetKeyBuffer()
 		}
 		if keyval >= 32 && keyval <= 126 {
 			keyBuffer += string(rune(keyval))
@@ -134,7 +133,7 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 			} else if pending {
 				statusDirty = true
 				appWindow.SetStatus("[NORMAL] " + keyBuffer + " ")
-				chordTimer = time.AfterFunc(chordTimeout, func() {
+				chordTimer = time.AfterFunc(time.Duration(appConfig.ChordTimeout) * time.Millisecond, func() {
 					resetKeyBuffer()
 				})
 			}

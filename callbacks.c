@@ -21,7 +21,7 @@ void on_load_changed(WebKitWebView *web_view,
 gboolean on_key_press(GtkWidget *widget,
                       GdkEventKey *event,
                       gpointer user_data) {
-	g_print("[KeyPress] key pressed %u : %u\n", event->keyval, event->state);
+	//g_print("[KeyPress] key pressed %u : %u\n", event->keyval, event->state);
 	return HandleKeyPress(event->keyval, event->state);
 }
 
@@ -36,7 +36,7 @@ void on_cmd_activate(GtkEntry *entry,
                      gpointer user_data) {
     const gchar *text = gtk_entry_get_text(entry);
     if (text != NULL) {
-        HandleCmdActivate((const char *)text);
+        HandleCmdActivate((char *)text);
     }
 }
 

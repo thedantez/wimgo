@@ -45,7 +45,7 @@ func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload s
 
 // func(-s) to scrolling
 func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by Ox: create new func or modify this func
-	jsScript := C.CString(fmt.Sprintf("window.scrollBy(%d, %d)", (deltaX * 100), (deltaY * 100)))
+	jsScript := C.CString(fmt.Sprintf("window.scrollBy(%d, %d)", (deltaX * appConfig.ScrollStep), (deltaY * appConfig.ScrollStep)))
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
 		b.webView,
@@ -195,8 +195,7 @@ func init() {
 var appWindow *BrowserWindow	// global pointer for changes in window & ui
 
 func NewWindow(url string) *BrowserWindow {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))		// creating stuctured logs
-	logger.Info("starting creating window...")
+	slog.Info("starting creating window...")
 
 	// main window GTK
 	C.gtk_init(nil, nil)	// initializing GTK
