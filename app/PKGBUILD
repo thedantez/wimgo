@@ -1,0 +1,45 @@
+# Maintainer: thedantez (github)
+pkgname=wimgo-git
+pkgver=r26.86d4316
+pkgrel=1
+pkgdesc="Minimalist, keyboard-driven WebKitGTK browser"
+arch=('x86_64')
+url="https://github.com/thedantez/wimgo"
+license=('custom')
+depends=('gtk3' 'webkit2gtk-4.1' 'glib2')
+makedepnds=('git' 'go')
+provides=('wimgo')
+conflicts=('wimgo')
+source=("${pkgname}::git+https://github.com/thedantez/wimgo.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "${pkgname}"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+build() {
+    cd "${pkgname}"
+    export CGO_CPPFLAGS="${CPPFLAGS}"
+    export CGO_CFLAGS="${CFLAGS}"
+    export CGO_CXXFLAGS="${CXXFLAGS}"
+    export CGO_LDFLAGS="${LDFLAGS}"
+    export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external"
+
+    go build -v -ldflags="-s -w" -o wimgo .
+}
+
+package() {
+    cd "${pkgname}"
+
+    # installing binary to system
+    install -Dm755 wimgo "${pkgdir}/usr/bin/wimgo"
+
+    # installing docs
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+
+    # installing deskto-file for rofi/wofi/dmenu
+    if [ -f "wimgo.desktop" ]; then
+        install -Dm644 wimgo.desktop "${pkgdir}/usr/share/applications/wimgo.desktop"
+    fi
+}
