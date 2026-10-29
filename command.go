@@ -110,6 +110,9 @@ func ExecuteCommand(cmd string, args []string) {
 	case "config-load":
 		LoadConfig()
 		slog.Info("config loaded")
+	case "stop":
+		appWindow.StopLoading()
+		slog.Info("stop loading")
 	default:
 		slog.Warn("unknown command", "cmd", cmd)
 	}

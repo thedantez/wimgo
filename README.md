@@ -45,6 +45,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `:set <key> <val>` | change configuration setting |
 | `:config-save` | save current configuration to `~/.config/wimgo/config` |
 | `:config-load` | load configuration from `~/.config/wimgo/config` |
+| `:stop` | stop loading page |
 
 # configuration
 wimgo uses a plain text command-driven configuration file located at `~/.config/wimgo/config` (creating in first start)

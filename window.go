@@ -42,6 +42,10 @@ func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload s
 	C.webkit_web_view_reload_bypass_cache(b.webView)
 }
 
+func (b *BrowserWindow) StopLoading() {
+	C.webkit_web_view_stop_loading(b.webView)
+}
+
 
 // func(-s) to scrolling
 func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by Ox: create new func or modify this func
