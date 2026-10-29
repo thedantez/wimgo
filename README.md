@@ -56,6 +56,19 @@ set searchEngine https://google.com/search?q=
 set scrollStep 100
 set chordTimeout 1200
 ```
+| variable | value | example (& default values) |
+| :---: | :---: | :---: |
+| `homePage` | string | `https://google.com` |
+| `searchEngine` | string | `https://google.com/search?q=` |
+| `scrollStep` | integer | 100 |
+| `chordTimeout` | integer | 1200 |
+
+All variables can be used via:
+- lowerCamelCase
+- snake_case
+- lowerflatcase
+
+ for example: `homePage` / `home_page` / `homepage`
 
 # fast installing (only in Arch-based)
 ```bash
