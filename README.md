@@ -57,7 +57,15 @@ set scrollStep 100
 set chordTimeout 1200
 ```
 
-# dependencies
+# fast installing (only in Arch-based)
+```bash
+git clone https://github.com/thedantez/wimgo.git
+cd wimgo/app
+makepkg
+```
+
+# regular installing (building from source)
+## dependencies
 make sure u've GTK3 & WebKitGTK installed:
 
 **arch-based**
@@ -70,7 +78,7 @@ sudo pacman -S base-devel go gtk3 webkit2gtk-4.1 # or u can use yay
 sudo apt install build-essential golang libgtk-3-dev libwebkit2gtk-4.1-dev
 ```
 
-# building & running
+## building & running
 ```bash
 git clone https://github.com/thedantez/wimgo.git
 cd wimgo
