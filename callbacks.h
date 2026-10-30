@@ -4,6 +4,12 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
+WebKitWebView* create_custom_webview(const char *data_dir,
+                                     const char *cache_dir,
+                                     gboolean ephemeral);
+
+void set_webview_webgl(WebKitWebView *web_view, gboolean flag);
+
 gboolean on_load_failed(WebKitWebView *web_view,
 								WebKitLoadEvent load_event,
 								gchar *failing_uri,

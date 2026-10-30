@@ -101,6 +101,9 @@ func ExecuteCommand(cmd string, args []string) {
 				} else {
 					slog.Warn("invalid value for chordTimeout", "arg", args[1])
 				}
+			case "webgl", "webGL", "webGl":
+				appConfig.WebGL = (args[1] == "true" || args[1] == "1" || args[1] == "on")
+				appWindow.SetWebGL(appConfig.WebGL)
 			default:
 				slog.Info("unknown args for command set ", "value", args[0], "args", args[1])
 		}

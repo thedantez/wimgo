@@ -15,6 +15,7 @@ type Config struct {
 	ScrollStep		int
 	ChordTimeout	int
 	ZoomStep		float64
+	WebGL			bool
 }
 
 var appConfig = Config{		// default
@@ -23,6 +24,7 @@ var appConfig = Config{		// default
 	ScrollStep:		100,
 	ChordTimeout:	1200,
 	ZoomStep:		0.25,
+	WebGL:			false,
 }
 
 func getConfigPath() (string, error) {
@@ -84,11 +86,13 @@ func SaveConfig() {
 set homePage %s
 set searchEngine %s
 set scrollStep %d
-set chordTimeout %d`,
+set chordTimeout %d
+set webgl %t`,
 						appConfig.HomePage,
 						appConfig.SearchEngine,
 						appConfig.ScrollStep,
-						appConfig.ChordTimeout)
+						appConfig.ChordTimeout,
+						appConfig.WebGL)
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		slog.Error("failed to write config file", "err", err)
 		return

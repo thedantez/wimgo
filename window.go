@@ -11,7 +11,7 @@ import "C" 	// import C-world
 import ( 	// import Go's libs
 	"log/slog"
 	"fmt"
-	"os"
+	//"os"
 	"runtime"
 	"unsafe"	// for c-world injections
 )
@@ -24,6 +24,15 @@ type BrowserWindow struct {
 	infoLabel	*C.GtkWidget
 }
 
+
+//func for set webGL value
+func (b *BrowserWindow) SetWebGL(flag bool) {
+	var cFlag C.gboolean
+	if flag {
+		cFlag = 1
+	}
+	C.set_webview_webgl(b.webView, cFlag)
+}
 
 // func for hide cmdEntry
 func (b *BrowserWindow) Show() {
@@ -193,7 +202,7 @@ func UpdateLoadProgress(progress float64) {
 // func for start GTK
 func init() {
 	runtime.LockOSThread()
-	os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
+	//os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 }
 
 // func for inject JS
@@ -208,7 +217,7 @@ func (b *BrowserWindow) RunJS(script string) {
 
 var appWindow *BrowserWindow	// global pointer for changes in window & ui
 
-func NewWindow(url string) *BrowserWindow {
+func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	slog.Info("starting creating window...")
 
 	// main window GTK
@@ -232,7 +241,17 @@ func NewWindow(url string) *BrowserWindow {
 	C.gtk_window_set_title((*C.GtkWindow)(unsafe.Pointer(window)), cTitle)
 
 	// engine: WebKit
-	webView := C.webkit_web_view_new()	// window for view web
+	cData := C.CString(dataDir)
+	defer C.free(unsafe.Pointer(cData))
+	cCache := C.CString(cacheDir)
+	defer C.free(unsafe.Pointer(cCache))
+
+	var cEphemeral C.gboolean
+	if ephemeral {
+		cEphemeral = 1
+	}
+
+	webView := C.create_custom_webview(cData, cCache, cEphemeral)	// window for view web
 
 	cSignalFailed := C.CString("load-failed")		// if web can't load
 	defer C.free(unsafe.Pointer(cSignalFailed))
@@ -449,5 +468,6 @@ func NewWindow(url string) *BrowserWindow {
 		cmdEntry:		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 		infoLabel: 		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
 	}
+	appWindow.SetWebGL(appConfig.WebGL)
 	return appWindow
 }

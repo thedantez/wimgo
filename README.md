@@ -55,6 +55,7 @@ set homePage https://google.com
 set searchEngine https://google.com/search?q=
 set scrollStep 100
 set chordTimeout 1200
+set webgl true
 ```
 | variable | value | example (& default values) |
 | :---: | :---: | :---: |
@@ -62,6 +63,7 @@ set chordTimeout 1200
 | `searchEngine` | string | `https://google.com/search?q=` |
 | `scrollStep` | integer | 100 |
 | `chordTimeout` | integer | 1200 |
+| `webgl` | bool | true |
 
 All variables can be used via:
 - lowerCamelCase
@@ -84,11 +86,17 @@ make sure u've GTK3 & WebKitGTK installed:
 **arch-based**
 ```bash
 sudo pacman -S base-devel go gtk3 webkit2gtk-4.1 # or u can use yay
+
+# optional: GStreamer
+sudo pacman -S gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav
 ```
 
 **debian-based**
 ```bash
 sudo apt install build-essential golang libgtk-3-dev libwebkit2gtk-4.1-dev
+
+# optional: GStreamer
+sudo apt install gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
 ```
 
 ## building & running

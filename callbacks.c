@@ -1,6 +1,30 @@
 #include "callbacks.h"
 #include "_cgo_export.h"
 
+WebKitWebView* create_custom_webview(const char *data_dir,
+                                     const char *cache_dir,
+                                     gboolean ephemeral) {
+    WebKitWebsiteDataManager *manager;
+
+    if (ephemeral) {
+        manager = webkit_website_data_manager_new_ephemeral();
+    } else {
+        manager = webkit_website_data_manager_new(
+                "base-data-directory", data_dir,
+                "base-cache-directory", cache_dir,
+                NULL
+                );
+    }
+
+    WebKitWebContext *context = webkit_web_context_new_with_website_data_manager(manager);
+    g_object_unref(manager);
+
+    WebKitWebView *view = WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(context));
+    g_object_unref(context);
+
+    return view;
+}
+
 gboolean on_load_failed(WebKitWebView *web_view,
                         WebKitLoadEvent load_event,
                         gchar *failing_uri,
@@ -62,6 +86,14 @@ void enable_dark_theme(void) {
     }
 }
 
+void set_webview_webgl(WebKitWebView *web_view, gboolean flag) {
+    if (!web_view) return;
+    WebKitSettings *settings = webkit_web_view_get_settings(web_view);
+    if (settings != NULL) {
+        webkit_settings_set_enable_webgl(settings, flag);
+    }
+}
+
 void apply_webview_dark_mode(WebKitWebView *web_view) {     // 0 =no_preference, 1=light, 2=dark
     WebKitSettings *settings = webkit_web_view_get_settings(web_view);
     WebKitWebContext *context = webkit_web_view_get_context(web_view);
@@ -70,9 +102,9 @@ void apply_webview_dark_mode(WebKitWebView *web_view) {     // 0 =no_preference,
         if (g_object_class_find_property(G_OBJECT_GET_CLASS(settings), "color-scheme")) {
             g_object_set(G_OBJECT(settings), "color-scheme", 2, NULL);
         }
-        webkit_settings_set_enable_webgl(settings, FALSE);
-        webkit_settings_set_enable_media_stream(settings, FALSE);
-        webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
+        webkit_settings_set_enable_media_stream(settings, TRUE);
+        webkit_settings_set_enable_mediasource(settings, TRUE);
+        webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND);
     }
 }
 
