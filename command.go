@@ -33,7 +33,7 @@ func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & pa
 		args := parts[1:]
 		ExecuteCommand(cmd, args)
 	} else {
-		OpenUrl(raw)
+		appWindow.LoadURL(ParseUrl(raw))
 	}
 
 	if appWindow != nil {
@@ -55,8 +55,28 @@ func ExecuteCommand(cmd string, args []string) {
 			slog.Warn("open command requires a url")
 			return
 		}
+
+		inNewTab := false
+		if args[0] == "-t" {
+			inNewTab = true
+			args = args[1:]
+		}
+
+		if len(args) == 0 {
+			if inNewTab && appWindow != nil {
+				appWindow.NewTab(appConfig.HomePage)
+			}
+			return
+		}
+
 		target := strings.Join(args, " ")
-		OpenUrl(target)
+		if inNewTab {
+			if appWindow != nil {
+				appWindow.NewTab(ParseUrl(target))
+			}
+		} else {
+			appWindow.LoadURL(ParseUrl(target))
+		}
 	case "r", "reload":
 		if appWindow != nil {
 			appWindow.Reload()
@@ -170,11 +190,11 @@ func ExecuteCommand(cmd string, args []string) {
 	}
 }
 
-func OpenUrl(rawURL string) {
+func ParseUrl(rawURL string) string {
 	slog.Info("opening url", "rawURL", rawURL)
 	target := strings.TrimSpace(rawURL)
 	if len(target) == 0 {
-		return
+		return ""
 	}
 
 	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
@@ -190,7 +210,5 @@ func OpenUrl(rawURL string) {
 	}
 
 	slog.Info("navigatin to URL", "url", target)
-	if appWindow != nil {
-		appWindow.LoadURL(target)
-	}
+	return target
 }

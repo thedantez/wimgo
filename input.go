@@ -126,6 +126,12 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					appWindow.SetStatus("[COMMAND] ")
 					slog.Info("detected o")
 					return C.TRUE
+				case 79:	// O
+					currentMode = ModeCommand
+					appWindow.OpenCommand(":open -t ")
+					appWindow.SetStatus("[COMMAND] ")
+					slog.Info("detected O")
+					return C.TRUE
 				case 58:	// :
 					currentMode = ModeCommand
 					appWindow.OpenCommand(":")
