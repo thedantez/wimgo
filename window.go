@@ -199,7 +199,9 @@ func (b *BrowserWindow) UpdateTabBar() {
 	}
 	C.gtk_widget_show(b.tabBarLabel)
 
-	winWidth := int(C.gtk_widget_get_allocated_width(b.window))
+	var cW, cH C.gint
+	C.gtk_window_get_size((*C.GtkWindow)(unsafe.Pointer(b.window)), &cW, &cH)
+	winWidth := int(cW)
 	if winWidth <= 0 {
 		winWidth = 1200
 	}
@@ -482,10 +484,13 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	notebook := (*C.GtkNotebook)(unsafe.Pointer(C.gtk_notebook_new()))	// creating list of tabs
 	C.gtk_notebook_set_show_tabs(notebook, C.FALSE)
 	C.gtk_notebook_set_show_border(notebook, C.FALSE)
+
 	cEmptyBar := C.CString("")
 	defer C.free(unsafe.Pointer(cEmptyBar))
 	tabBarLabel := C.gtk_label_new(cEmptyBar)
 	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), C.GTK_ALIGN_START)
+	C.gtk_label_set_ellipsize((*C.GtkLabel)(unsafe.Pointer(tabBarLabel)), C.PANGO_ELLIPSIZE_END)
+	C.gtk_widget_set_size_request((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), 10, -1)
 
 	keyPress := C.CString("key-press-event")	// key press handler
 	defer C.free(unsafe.Pointer(keyPress))

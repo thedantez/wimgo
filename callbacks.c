@@ -58,10 +58,11 @@ void on_notify_progress(WebKitWebView *web_view,
 	UpdateLoadProgress(progress);
 }
 
-void on_window_resized(GtkWidget *widget,
-                       GParamSpec *pspec,
+gboolean on_window_resized(GtkWidget *widget,
+                       GdkEventConfigure *event,
                        gpointer user_data) {
     TriggerUpdateTabBar();
+    return FALSE;
 }
 
 void on_notify_title(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data) {
