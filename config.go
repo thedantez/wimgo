@@ -16,6 +16,7 @@ type Config struct {
 	ChordTimeout	int
 	ZoomStep		float64
 	WebGL			bool
+	KeyBindings map[string]string
 }
 
 var appConfig = Config{		// default
@@ -25,6 +26,46 @@ var appConfig = Config{		// default
 	ChordTimeout:	1200,
 	ZoomStep:		0.25,
 	WebGL:			false,
+	KeyBindings: DefaultKeyBindings(),
+}
+
+func DefaultKeyBindings() map[string]string{
+	return	map[string]string{
+		"j":	"scroll_down",
+		"k":	"scroll_up",
+		"gg":	"scroll_top",
+		"G":	"scroll_bottom",
+		//"gG":	"scroll_bottom",
+		"r":	"soft_reload",
+		"R":	"hard_reload",
+		"H":	"history_back",
+		"L":	"history_forward",
+		"f":	"hints",
+		"+":	"zoom_in",
+		//"zi":	"zoom_in",
+		"-":	"zoom_out",
+		//"zo":	"zoom_out",
+		"=":	"reset_zoom",
+		//"zz":	"reset_zoom",
+	}
+}
+
+func ResetBinding(key string) {
+	defaults := DefaultKeyBindings()
+
+	if key == "" || key == "all" {
+		appConfig.KeyBindings = defaults
+		slog.Info("all keybindings reset to defaults")
+		return
+	}
+
+	if defaultAction, exists := defaults[key]; exists {
+		appConfig.KeyBindings[key] = defaultAction
+		slog.Info("keybinding reset to default", "key", key, "action", defaultAction)
+	} else {
+		delete(appConfig.KeyBindings, key)
+		slog.Info("custom keybinding removed", "key", key)
+	}
 }
 
 func getConfigPath() (string, error) {

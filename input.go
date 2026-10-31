@@ -50,34 +50,40 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		return false, true
 	}
 
-	switch cmd {
-	case "j":
+	action, exists := appConfig.KeyBindings[cmd]
+	if !exists {
+		slog.Warn("unknown or unbound key chord", "chord", buf)
+		return true, false
+	}
+
+	switch action {
+	case "scroll_down":
 		appWindow.Scroll(0, count)
-	case "k":
+	case "scroll_up":
 		appWindow.Scroll(0, -count)
-	case "l":
+	case "scroll_right":
 		appWindow.Scroll(count, 0)
-	case "h":
+	case "scroll_left":
 		appWindow.Scroll(-count, 0)
-	case "gg":
+	case "scroll_top":
 		appWindow.ScrollToTop()
-	case "G", "gG":
+	case "scroll_bottom":
 		appWindow.ScrollToBottom()
-	case "f":
+	case "hints":
 		StartHints()
-	case "r":
+	case "soft_reload":
 		appWindow.Reload()
-	case "R":
+	case "hard_reload":
 		appWindow.ReloadBypassCache()
-	case "H":
+	case "history_back":
 		appWindow.GoBack()
-	case "L":
+	case "history_forward":
 		appWindow.GoForward()
-	case "zi", "+":
+	case "zoom_in":
 		appWindow.ZoomIn()
-	case "zo", "-":
+	case "zoom_out":
 		appWindow.ZoomOut()
-	case "zz", "=":
+	case "reset_zoom":
 		appWindow.ResetZoom()
 	default:
 		slog.Warn("unknown key chord", "chord", buf)

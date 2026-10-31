@@ -107,6 +107,33 @@ func ExecuteCommand(cmd string, args []string) {
 			default:
 				slog.Info("unknown args for command set ", "value", args[0], "args", args[1])
 		}
+	case "bind":
+		if len(args) < 2 {
+			slog.Warn("bind command requires key & action (usage: bind <key> <action>)")
+			return
+		}
+		key := args[0]
+		action := args[1]
+
+		if appConfig.KeyBindings == nil {
+			appConfig.KeyBindings = make(map[string]string)
+		}
+		appConfig.KeyBindings[key] = action
+		slog.Info("key bound successfully", "key", key, "action", action)
+	case "unbind":
+		if len(args) < 1 {
+			slog.Warn("unbind command requires a key (usage: :unbind <key>)")
+			return
+		}
+		key := args[0]
+		delete(appConfig.KeyBindings, key)
+		slog.Info("key unbound (disabled)", "key", key)
+	case "bind-default", "reset-default":
+		key := ""
+		if len(args) > 0 {
+			key = args[0]
+		}
+		ResetBinding(key)
 	case "config-save":
 		SaveConfig()
 		slog.Info("config saved")
