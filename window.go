@@ -11,27 +11,210 @@ import "C" 	// import C-world
 import ( 	// import Go's libs
 	"log/slog"
 	"fmt"
-	//"os"
+	"os"
+	"path/filepath"
 	"runtime"
 	"unsafe"	// for c-world injections
 )
 
 type BrowserWindow struct {
 	window 		*C.GtkWidget
-	webView 	*C.WebKitWebView
+	notebook	*C.GtkNotebook
+	tabBarLabel *C.GtkWidget
+	//webView 	*C.WebKitWebView
 	statusLabel *C.GtkWidget
 	cmdEntry	*C.GtkWidget
 	infoLabel	*C.GtkWidget
+	tabs		[]*BrowserTab
+	activeTab	int
 }
 
 
+//funcs for manipulating tabs
+func (b *BrowserWindow) ActiveWebView() *C.WebKitWebView {
+	if b == nil || len(b.tabs) == 0 || b.activeTab < 0 || b.activeTab >= len(b.tabs) {
+		return nil
+	}
+	return b.tabs[b.activeTab].webView
+}
+
+var tabCounter int
+
+func (b *BrowserWindow) NewTab(url string) {
+	tabCounter++
+
+	home, _ := os.UserHomeDir()
+	dataDir := filepath.Join(home, ".local", "share", "wimgo")
+	cacheDir := filepath.Join(home, ".cache", "wimgo")
+
+	cData := C.CString(dataDir)
+	defer C.free(unsafe.Pointer(cData))
+	cCache := C.CString(cacheDir)
+	defer C.free(unsafe.Pointer(cCache))
+
+	webView := C.create_custom_webview(cData, cCache, C.gboolean(0))	// window for view web
+	C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
+
+	cSignalFailed := C.CString("load-failed")		// if web can't load
+	defer C.free(unsafe.Pointer(cSignalFailed))
+	C.g_signal_connect_data(
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalFailed)),
+		C.GCallback(C.on_load_failed),
+		nil, nil, 0,
+	)
+
+	cSignalChanged := C.CString("load-changed")		// if web loaded/changed
+	defer C.free(unsafe.Pointer(cSignalChanged))
+	C.g_signal_connect_data(	// connect w/ C-world
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
+		C.GCallback(C.on_load_changed),
+		nil, nil, 0,
+	)
+
+	cSignalTitle := C.CString("notify::title")
+	defer C.free(unsafe.Pointer(cSignalTitle))
+	C.g_signal_connect_data(
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalTitle)),
+		C.GCallback(C.on_notify_title),
+		nil, nil, 0,
+	)
+
+	cSignalProgress := C.CString("notify::estimated-load-progress")		// editing status of loading page in infoLabel
+	defer C.free(unsafe.Pointer(cSignalProgress))
+	C.g_signal_connect_data(
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalProgress)),
+		C.GCallback(C.on_notify_progress),
+		nil, nil, 0,
+	)
+
+	tab := &BrowserTab{
+		id:			tabCounter,
+		webView:	webView,
+		title:		"loading...",
+		uri:		url,
+		state:		TabLoading,
+	}
+
+	b.tabs = append(b.tabs, tab)
+
+	C.gtk_notebook_append_page(
+		b.notebook,
+		(*C.GtkWidget)(unsafe.Pointer(webView)),
+		nil,
+	)
+
+	C.gtk_widget_show((*C.GtkWidget)(unsafe.Pointer(webView)))
+
+	newIndex := len(b.tabs) - 1
+	b.SwitchTab(newIndex)
+
+	cURL := C.CString(url)
+	defer C.free(unsafe.Pointer(cURL))
+	C.webkit_web_view_load_uri(webView, cURL)
+}
+
+func (b *BrowserWindow) SwitchTab(index int) {
+	if index < 0 || index >= len(b.tabs) {
+		return
+	}
+	b.activeTab = index
+	C.gtk_notebook_set_current_page(
+		b.notebook,
+		C.gint(index),
+	)
+	b.UpdateTabBar()
+
+	if view := b.ActiveWebView(); view != nil {
+		cURI := C.webkit_web_view_get_uri(view)
+		if cURI != nil {
+			b.SetInfo(C.GoString(cURI))
+		}
+	}
+}
+
+func (b *BrowserWindow) CloseTab(index int) {
+	if len(b.tabs) <= 1 {
+		C.gtk_main_quit()
+		return
+	}
+	if index < 0 || index >= len(b.tabs) {
+		index = b.activeTab
+	}
+
+	C.gtk_notebook_remove_page(b.notebook, C.gint(index))
+	b.tabs = append(b.tabs[:index], b.tabs[index+1:]...)
+
+	if b.activeTab >= len(b.tabs) {
+		b.activeTab = len(b.tabs) - 1
+	}
+	b.SwitchTab(b.activeTab)
+}
+
+func (b *BrowserWindow) NextTab() {
+	if len(b.tabs) <= 1 {
+		return
+	}
+	next := (b.activeTab + 1) % len(b.tabs)
+	b.SwitchTab(next)
+}
+
+func (b *BrowserWindow) PrevTab() {
+	if len(b.tabs) <= 1 {
+		return
+	}
+	prev := (b.activeTab - 1 + len(b.tabs)) % len(b.tabs)
+	b.SwitchTab(prev)
+}
+
+func (b *BrowserWindow) UpdateTabBar() {
+	var barText string
+	for i, tab := range b.tabs {
+		var stateIcon string
+		switch tab.state {
+			case TabLoading:
+				stateIcon = "-"
+			case TabLoaded:
+				stateIcon = "o"
+			case TabFailed:
+				stateIcon = "x"
+		}
+		displayTitle := tab.title
+		if len(displayTitle) > 15 {
+			displayTitle = displayTitle[:12] + "..."
+		}
+
+		if i == b.activeTab {
+			barText += fmt.Sprintf("[%d : %s %s] * ", i+1, stateIcon, displayTitle)
+		} else {
+			barText += fmt.Sprintf("[%d : %s %s]   ", i+1, stateIcon, displayTitle)
+		}
+	}
+
+	cText := C.CString(barText)
+	defer C.free(unsafe.Pointer(cText))
+	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.tabBarLabel)), cText)
+}
+
 //func for set webGL value
 func (b *BrowserWindow) SetWebGL(flag bool) {
+	if b == nil {
+		return
+	}
+
+	view := b.ActiveWebView()
+	if view == nil {
+		return
+	}
+
 	var cFlag C.gboolean
 	if flag {
 		cFlag = 1
 	}
-	C.set_webview_webgl(b.webView, cFlag)
+	C.set_webview_webgl(b.ActiveWebView(), cFlag)
 }
 
 // func for hide cmdEntry
@@ -44,15 +227,15 @@ func (b *BrowserWindow) Show() {
 
 // func for reload sites
 func (b *BrowserWindow) Reload() {		// like soft reload (use saved data from cache if it wasn't changed)
-	C.webkit_web_view_reload(b.webView)
+	C.webkit_web_view_reload(b.ActiveWebView())
 }
 
 func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload site)
-	C.webkit_web_view_reload_bypass_cache(b.webView)
+	C.webkit_web_view_reload_bypass_cache(b.ActiveWebView())
 }
 
 func (b *BrowserWindow) StopLoading() {
-	C.webkit_web_view_stop_loading(b.webView)
+	C.webkit_web_view_stop_loading(b.ActiveWebView())
 }
 
 
@@ -61,7 +244,7 @@ func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by O
 	jsScript := C.CString(fmt.Sprintf("window.scrollBy(%d, %d)", (deltaX * appConfig.ScrollStep), (deltaY * appConfig.ScrollStep)))
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
-		b.webView,
+		b.ActiveWebView(),
 		jsScript,
 		nil, nil, nil)
 }
@@ -70,7 +253,7 @@ func (b *BrowserWindow) ScrollToTop() {
 	jsScript := C.CString("window.scrollTo(0, 0)")
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
-		b.webView,
+		b.ActiveWebView(),
 		jsScript,
 		nil, nil, nil)
 }
@@ -79,7 +262,7 @@ func (b *BrowserWindow) ScrollToBottom() {
 	jsScript := C.CString("window.scrollTo(0, document.body.scrollHeight)")
 	defer C.free(unsafe.Pointer(jsScript))
 	C.webkit_web_view_run_javascript(
-		b.webView,
+		b.ActiveWebView(),
 		jsScript,
 		nil, nil, nil)
 }
@@ -87,17 +270,17 @@ func (b *BrowserWindow) ScrollToBottom() {
 
 // funcs to change zoom
 func (b *BrowserWindow) ZoomIn() {
-	zoomLevel := C.webkit_web_view_get_zoom_level(b.webView)
-	C.webkit_web_view_set_zoom_level(b.webView, zoomLevel + 0.25)
+	zoomLevel := C.webkit_web_view_get_zoom_level(b.ActiveWebView())
+	C.webkit_web_view_set_zoom_level(b.ActiveWebView(), zoomLevel + 0.25)
 }
 
 func (b *BrowserWindow) ZoomOut() {
-	zoomLevel := C.webkit_web_view_get_zoom_level(b.webView)
-	C.webkit_web_view_set_zoom_level(b.webView, zoomLevel - 0.25)
+	zoomLevel := C.webkit_web_view_get_zoom_level(b.ActiveWebView())
+	C.webkit_web_view_set_zoom_level(b.ActiveWebView(), zoomLevel - 0.25)
 }
 
 func (b *BrowserWindow) ResetZoom() {
-	C.webkit_web_view_set_zoom_level(b.webView, 1)
+	C.webkit_web_view_set_zoom_level(b.ActiveWebView(), 1)
 }
 
 
@@ -136,14 +319,14 @@ func (b *BrowserWindow) CloseCommand() {
 	)
 	C.gtk_widget_hide(b.cmdEntry)
 	C.gtk_widget_grab_focus(
-		(*C.GtkWidget)(unsafe.Pointer(b.webView)),
+		(*C.GtkWidget)(unsafe.Pointer(b.ActiveWebView())),
 	)
 }
 
 func (b *BrowserWindow) GoBack() {
-	can_go_back := C.webkit_web_view_can_go_back(b.webView)
+	can_go_back := C.webkit_web_view_can_go_back(b.ActiveWebView())
 	if can_go_back != 0 {
-		C.webkit_web_view_go_back(b.webView)
+		C.webkit_web_view_go_back(b.ActiveWebView())
 		slog.Info("go back history")
 	} else {
 		slog.Info("can't go back history")
@@ -151,9 +334,9 @@ func (b *BrowserWindow) GoBack() {
 }
 
 func (b *BrowserWindow) GoForward() {
-	can_go_forward := C.webkit_web_view_can_go_forward(b.webView)
+	can_go_forward := C.webkit_web_view_can_go_forward(b.ActiveWebView())
 	if can_go_forward != 0 {
-		C.webkit_web_view_go_forward(b.webView)
+		C.webkit_web_view_go_forward(b.ActiveWebView())
 		slog.Info("go forward history")
 	} else {
 		slog.Info("can't go forward history")
@@ -169,7 +352,7 @@ func HandleCmdActivate(cText *C.char) {
 func (b *BrowserWindow) LoadURL(url string) {
 	cURL := C.CString(url)
 	defer C.free(unsafe.Pointer(cURL))
-	C.webkit_web_view_load_uri(b.webView, cURL)
+	C.webkit_web_view_load_uri(b.ActiveWebView(), cURL)
 }
 
 // funcs for infoLabel
@@ -188,8 +371,13 @@ func UpdateLoadProgress(progress float64) {
 		return
 	}
 
+	view := appWindow.ActiveWebView()
+	if view == nil {
+		return
+	}
+
 	percent := int(progress * 100)
-	cURI := C.webkit_web_view_get_uri(appWindow.webView)
+	cURI := C.webkit_web_view_get_uri(view)
 
 	if percent == 100 {
 		appWindow.SetInfo(C.GoString(cURI))
@@ -209,7 +397,7 @@ func (b *BrowserWindow) RunJS(script string) {
 	cScript := C.CString(script)
 	defer C.free(unsafe.Pointer(cScript))
 	C.webkit_web_view_run_javascript(
-		b.webView,
+		b.ActiveWebView(),
 		cScript,
 		nil, nil, nil)
 }
@@ -225,6 +413,14 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 
 	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
 	C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
+
+	notebook := (*C.GtkNotebook)(unsafe.Pointer(C.gtk_notebook_new()))	// creating list of tabs
+	C.gtk_notebook_set_show_tabs(notebook, C.FALSE)
+	C.gtk_notebook_set_show_border(notebook, C.FALSE)
+	cEmptyBar := C.CString("")
+	defer C.free(unsafe.Pointer(cEmptyBar))
+	tabBarLabel := C.gtk_label_new(cEmptyBar)
+	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), C.GTK_ALIGN_START)
 
 	keyPress := C.CString("key-press-event")	// key press handler
 	defer C.free(unsafe.Pointer(keyPress))
@@ -244,49 +440,6 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	defer C.free(unsafe.Pointer(cData))
 	cCache := C.CString(cacheDir)
 	defer C.free(unsafe.Pointer(cCache))
-
-	var cEphemeral C.gboolean
-	if ephemeral {
-		cEphemeral = 1
-	}
-
-	webView := C.create_custom_webview(cData, cCache, cEphemeral)	// window for view web
-
-	cSignalFailed := C.CString("load-failed")		// if web can't load
-	defer C.free(unsafe.Pointer(cSignalFailed))
-	C.g_signal_connect_data(	// connect w/ C-world
-		C.gpointer(webView),
-		(*C.gchar)(unsafe.Pointer(cSignalFailed)),
-		C.GCallback(C.on_load_failed),
-		nil, nil, 0,
-	)
-
-	cSignalChanged := C.CString("load-changed")		// if web loaded/changed
-	defer C.free(unsafe.Pointer(cSignalChanged))
-	C.g_signal_connect_data(	// connect w/ C-world
-		C.gpointer(webView),
-		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
-		C.GCallback(C.on_load_changed),
-		nil, nil, 0,
-	)
-
-	cSignalTitle := C.CString("notify::title")
-	defer C.free(unsafe.Pointer(cSignalTitle))
-	C.g_signal_connect_data(
-		C.gpointer(webView),
-		(*C.gchar)(unsafe.Pointer(cSignalTitle)),
-		C.GCallback(C.on_notify_title),
-		nil, nil, 0,
-	)
-
-	cSignalProgress := C.CString("notify::estimated-load-progress")		// editing status of loading page in infoLabel
-	defer C.free(unsafe.Pointer(cSignalProgress))
-	C.g_signal_connect_data(
-		C.gpointer(webView),
-		(*C.gchar)(unsafe.Pointer(cSignalProgress)),
-		C.GCallback(C.on_notify_progress),
-		nil, nil, 0,
-	)
 
 	cSignalDestroy := C.CString("destroy")	// destroy when window was closed
 	defer C.free(unsafe.Pointer(cSignalDestroy))
@@ -392,8 +545,6 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	)
 	C.g_object_unref(C.gpointer(cssProvider))
 
-	// style: enabling dark theme & dark mode
-	C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
 
 	// packing
 	mainbox := C.gtk_box_new(C.GTK_ORIENTATION_VERTICAL, 0)		// main box
@@ -410,11 +561,28 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 		(*C.GtkWidget)(unsafe.Pointer(mainbox)),
 	)
 
-	C.gtk_box_pack_start(	// packing webView window to main box
+	// old method
+	//C.gtk_box_pack_start(	// packing webView window to main box
+	//	(*C.GtkBox)(unsafe.Pointer(mainbox)),
+	//	(*C.GtkWidget)(unsafe.Pointer(webView)),
+	//	1,	// expand = true
+	//	1,	// fill = true
+	//	0,	// padding = 0
+	//)
+	// new version
+	C.gtk_box_pack_start(	// packing notebook to mainbox like web view
 		(*C.GtkBox)(unsafe.Pointer(mainbox)),
-		(*C.GtkWidget)(unsafe.Pointer(webView)),
+		(*C.GtkWidget)(unsafe.Pointer(notebook)),
 		1,	// expand = true
 		1,	// fill = true
+		0,	// padding = 0
+	)
+
+	C.gtk_box_pack_start(	// packing label w/ tabs to mainbox
+		(*C.GtkBox)(unsafe.Pointer(mainbox)),
+		(*C.GtkWidget)(unsafe.Pointer(tabBarLabel)),
+		0,	// expand = false
+		0,	// fill = false
 		0,	// padding = 0
 	)
 
@@ -450,23 +618,17 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 		0,	// padding = 0
 	)
 
-	// loading url
-	cURL := C.CString(url)
-	defer C.free(unsafe.Pointer(cURL))
-
-	C.webkit_web_view_load_uri(
-		(*C.WebKitWebView)(unsafe.Pointer(webView)),
-		cURL,
-	)
-
 	// creating appWindow global variable & pack all
 	appWindow = &BrowserWindow{		// modify appWindow variable for return & save changes in global level
 		window: 		window,
-		webView: 		(*C.WebKitWebView)(unsafe.Pointer(webView)),
+		notebook:		notebook,
+		tabBarLabel:	(*C.GtkWidget)(unsafe.Pointer(tabBarLabel)),
 		statusLabel: 	(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
 		cmdEntry:		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
 		infoLabel: 		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
+		activeTab:		0,
 	}
+	appWindow.NewTab(url)
 	appWindow.SetWebGL(appConfig.WebGL)
 	return appWindow
 }

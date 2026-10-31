@@ -77,6 +77,26 @@ func ExecuteCommand(cmd string, args []string) {
 			appWindow.GoForward()
 			slog.Info("go forward history")
 		}
+	case "tabnew", "t":
+		target := appConfig.HomePage
+		if len(args) > 0 {
+			target = strings.Join(args, " ")
+		}
+		if appWindow != nil {
+			appWindow.NewTab(target)
+		}
+	case "tabclose", "tc":
+		if appWindow != nil {
+			appWindow.CloseTab(appWindow.activeTab)
+		}
+	case "tabnext", "tn":
+		if appWindow != nil {
+			appWindow.NextTab()
+		}
+	case "tabprev", "tp":
+		if appWindow != nil {
+			appWindow.PrevTab()
+		}
 	case "set":
 		if len(args) < 2 {
 			slog.Warn("command set requires key & value")
@@ -103,7 +123,9 @@ func ExecuteCommand(cmd string, args []string) {
 				}
 			case "webgl", "webGL", "webGl":
 				appConfig.WebGL = (args[1] == "true" || args[1] == "1" || args[1] == "on")
-				appWindow.SetWebGL(appConfig.WebGL)
+				if appWindow != nil {
+					appWindow.SetWebGL(appConfig.WebGL)
+				}
 			default:
 				slog.Info("unknown args for command set ", "value", args[0], "args", args[1])
 		}

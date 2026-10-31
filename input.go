@@ -85,6 +85,12 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.ZoomOut()
 	case "reset_zoom":
 		appWindow.ResetZoom()
+	case "tab_next":
+		appWindow.NextTab()
+	case "tab_prev":
+		appWindow.PrevTab()
+	case "tab_close":
+		appWindow.CloseTab(appWindow.activeTab)
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}
