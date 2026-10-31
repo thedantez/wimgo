@@ -20,6 +20,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | :---: | :---: |
 | `:q`/`:quit` | close window |
 | `:o`/`:open` | open url |
+| `:open -t` | open url in new tab |
 | `:r`/`:reload` | reload site (like like soft reload: use unchanged data from cache)
 | `:r!`/`:reload!` | hard reload site (full reload site) |
 | `:b`/`:back` | go back history |
@@ -76,6 +77,9 @@ All variables (w/out bindings) can be used via:
 | `+` | `zoom_in` | zoom in |
 | `=` | `reset_zoom` | reset zoom |
 | `f` | `hints` | show hints |
+| `J` | `tab_next` | goto next tab (goto right) |
+| `K` | `tab_prev` | goto previous tab (goto left) |
+| `d` | `tab_close` | close active tab |
 
 # fast installing (only in Arch-based)
 ```bash
