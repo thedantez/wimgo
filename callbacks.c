@@ -31,6 +31,7 @@ gboolean on_load_failed(WebKitWebView *web_view,
                         GError *error,
                         gpointer user_data) {
 	g_print("[WebKit Error] URI: %s | Error: %s\n", failing_uri, error->message);
+    UpdateTabState(web_view, NULL, 0, 1);
 	return FALSE;
 }
 
@@ -39,7 +40,7 @@ void on_load_changed(WebKitWebView *web_view,
                      gpointer user_data) {
 	if (load_event == WEBKIT_LOAD_FINISHED) {
 		g_print("[WebKit] Page load finished: %s\n", webkit_web_view_get_uri(web_view));
-        ResetHintsState();
+        UpdateTabState(web_view, (char*)webkit_web_view_get_title(web_view), 1, 0);
 	}
 }
 
@@ -57,9 +58,18 @@ void on_notify_progress(WebKitWebView *web_view,
 	UpdateLoadProgress(progress);
 }
 
+void on_window_resized(GtkWidget *widget,
+                       GParamSpec *pspec,
+                       gpointer user_data) {
+    TriggerUpdateTabBar();
+}
+
 void on_notify_title(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_data) {
     const gchar *title = webkit_web_view_get_title(web_view);
     if (title == NULL) return;
+    if (title && !g_str_has_prefix(title, "__wimgo_hint_")) {
+        UpdateTabState(web_view, (char*)title, 0, 0);
+    }
 
     if (g_strcmp0(title, "__wimgo_hint_done__") == 0) {
         FinishHintAction(0); // 0 = ModeNormal

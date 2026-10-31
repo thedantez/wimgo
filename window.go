@@ -14,6 +14,7 @@ import ( 	// import Go's libs
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"unsafe"	// for c-world injections
 )
 
@@ -117,6 +118,28 @@ func (b *BrowserWindow) NewTab(url string) {
 	C.webkit_web_view_load_uri(webView, cURL)
 }
 
+//export UpdateTabState
+func UpdateTabState(view *C.WebKitWebView, cTitle *C.char, isFinished C.int, isFailed C.int) {
+	if appWindow == nil {
+		return
+	}
+
+	for _, tab := range appWindow.tabs {
+		if tab.webView == view {
+			if cTitle != nil {
+				tab.title = C.GoString(cTitle)
+			}
+			if isFailed == 1 {
+				tab.state = TabFailed
+			} else if isFinished == 1 {
+				tab.state = TabLoaded
+			}
+			break
+		}
+	}
+	appWindow.UpdateTabBar()
+}
+
 func (b *BrowserWindow) SwitchTab(index int) {
 	if index < 0 || index >= len(b.tabs) {
 		return
@@ -138,7 +161,6 @@ func (b *BrowserWindow) SwitchTab(index int) {
 
 func (b *BrowserWindow) CloseTab(index int) {
 	if len(b.tabs) <= 1 {
-		C.gtk_main_quit()
 		return
 	}
 	if index < 0 || index >= len(b.tabs) {
@@ -171,6 +193,28 @@ func (b *BrowserWindow) PrevTab() {
 }
 
 func (b *BrowserWindow) UpdateTabBar() {
+	if len(b.tabs) <= 1 {
+		C.gtk_widget_hide(b.tabBarLabel)
+		return
+	}
+	C.gtk_widget_show(b.tabBarLabel)
+
+	winWidth := int(C.gtk_widget_get_allocated_width(b.window))
+	if winWidth <= 0 {
+		winWidth = 1200
+	}
+
+	totalCols := (winWidth - 20) / 8
+	if totalCols < 40 {
+		totalCols = 40
+	}
+
+	numTabs := len(b.tabs)
+	slotWidth := totalCols / numTabs
+	if slotWidth < 12 {
+		slotWidth = 12
+	}
+
 	var barText string
 	for i, tab := range b.tabs {
 		var stateIcon string
@@ -182,21 +226,42 @@ func (b *BrowserWindow) UpdateTabBar() {
 			case TabFailed:
 				stateIcon = "x"
 		}
-		displayTitle := tab.title
-		if len(displayTitle) > 15 {
-			displayTitle = displayTitle[:12] + "..."
+
+		indicator := " "
+		if i == b.activeTab {
+			indicator = "*"
 		}
 
-		if i == b.activeTab {
-			barText += fmt.Sprintf("[%d : %s %s] * ", i+1, stateIcon, displayTitle)
-		} else {
-			barText += fmt.Sprintf("[%d : %s %s]   ", i+1, stateIcon, displayTitle)
+		prefix := fmt.Sprintf("[%d:%s", i+1, stateIcon)
+		suffix := fmt.Sprintf("]%s", indicator)
+		maxTitleLen := slotWidth - len(prefix) - len(suffix) - 1
+		if maxTitleLen < 3 {
+			maxTitleLen = 3
 		}
+
+		displayTitle := tab.title
+		if len(displayTitle) > maxTitleLen {
+			displayTitle = displayTitle[:maxTitleLen-2] + ".."
+		}
+
+		item := fmt.Sprintf("%s %s%s", prefix, displayTitle, suffix)
+
+		if len(item) < slotWidth {
+			item += strings.Repeat(" ", slotWidth - len(item))
+		}
+		barText += item
 	}
 
 	cText := C.CString(barText)
 	defer C.free(unsafe.Pointer(cText))
 	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.tabBarLabel)), cText)
+}
+
+//export TriggerUpdateTabBar
+func TriggerUpdateTabBar() {
+	if appWindow != nil {
+		appWindow.UpdateTabBar()
+	}
 }
 
 //func for set webGL value
@@ -428,6 +493,16 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 		C.gpointer(window),
 		(*C.gchar)(unsafe.Pointer(keyPress)),
 		C.GCallback(C.on_key_press),
+		nil, nil, 0,
+	)
+
+	//cSignalSize := C.CString("check-resize")
+	cSignalSize := C.CString("configure-event")
+	defer C.free(unsafe.Pointer(cSignalSize))
+	C.g_signal_connect_data(
+		C.gpointer(window),
+		(*C.gchar)(unsafe.Pointer(cSignalSize)),
+		C.GCallback(C.on_window_resized),
 		nil, nil, 0,
 	)
 
