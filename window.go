@@ -189,13 +189,12 @@ func UpdateLoadProgress(progress float64) {
 	}
 
 	percent := int(progress * 100)
-	if percent >= 100 {
-		cURI := C.webkit_web_view_get_uri(appWindow.webView)
-		if cURI != nil {
-			appWindow.SetInfo(C.GoString(cURI))
-		}
+	cURI := C.webkit_web_view_get_uri(appWindow.webView)
+
+	if percent == 100 {
+		appWindow.SetInfo(C.GoString(cURI))
 	} else {
-		appWindow.SetInfo(fmt.Sprintf("[%d%%]", percent))
+		appWindow.SetInfo(fmt.Sprintf("%s [%d%%]", (C.GoString(cURI)), percent))
 	}
 }
 
