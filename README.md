@@ -81,14 +81,7 @@ All variables (w/out bindings) can be used via:
 | `K` | `tab_prev` | goto previous tab (goto left) |
 | `d` | `tab_close` | close active tab |
 
-# fast installing (only in Arch-based)
-```bash
-git clone https://github.com/thedantez/wimgo.git
-cd wimgo/app
-makepkg
-```
-
-# regular installing (building from source)
+# installing (building from source)
 ## dependencies
 make sure u've GTK3 & WebKitGTK installed:
 
@@ -114,11 +107,7 @@ git clone https://github.com/thedantez/wimgo.git
 cd wimgo
 
 # for build binary file for ur system
-go build .
-./wimgo
-
-# for fast run w/out building
-go run .
+go build . && ./wimgo
 ```
 
 # flags
@@ -139,4 +128,4 @@ go run .
 
 [ ] gRPC bridge & core daemon separation
 
-[ ] tab & session management
+[x] tab & session management
