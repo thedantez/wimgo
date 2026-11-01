@@ -19,6 +19,7 @@ func main() {
 	noCookies := flag.Bool("no-cookies", false, "run browser in ephemeral in-memory mode w/out saving cookies")
 	flag.Parse()
 	LoadConfig()
+	InitHistory()
 
 	var dataDir, cacheDir string
 	if !*noCookies {

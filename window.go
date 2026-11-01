@@ -31,7 +31,61 @@ type BrowserWindow struct {
 }
 
 
-//funcs for manipulating tabs
+// funcs for command :history
+func (b *BrowserWindow) LoadHTML(htmlContent, baseURI string) {
+	view := b.ActiveWebView()
+	if view == nil {
+		return
+	}
+	cHTML := C.CString(htmlContent)
+	defer C.free(unsafe.Pointer(cHTML))
+	cBase := C.CString(baseURI)
+	defer C.free(unsafe.Pointer(cBase))
+
+	C.webkit_web_view_load_html(view, cHTML, cBase)
+}
+
+func (b *BrowserWindow) NewTabWithHTML(title, htmlContent string) {
+	b.NewTab("wimgo://history")
+
+	if len(b.tabs) > 0 {
+		current := b.tabs[b.activeTab]
+		current.title = title
+		current.state = TabLoaded
+		b.UpdateTabBar()
+	}
+
+	b.LoadHTML(htmlContent, "wimgo://history")
+}
+
+func (b *BrowserWindow) RefreshHistoryTabs() {
+	if globalHistory == nil {
+		return
+	}
+
+	rawRows := globalHistory.RenderHistoryRows()
+	escapedJS := strings.ReplaceAll(rawRows, "\\", "\\\\")
+	escapedJS = strings.ReplaceAll(escapedJS, "`", "\\`")
+	escapedJS = strings.ReplaceAll(escapedJS, "${", "\\${")
+
+	jsScript := fmt.Sprint(`
+	(function() {
+		var list = document.getElementById("history-list");
+		if (list) {
+			list.innerHTML = %s;
+		}
+	})();`, "`"+escapedJS+"`")
+
+	for _, tab := range b.tabs {
+		if tab.uri == "wimgo://history" {
+			cScript := C.CString(jsScript)
+			C.webkit_web_view_run_javascript(tab.webView, cScript, nil, nil, nil)
+			C.free(unsafe.Pointer(cScript))
+		}
+	}
+}
+
+// funcs for manipulating tabs
 func (b *BrowserWindow) ActiveWebView() *C.WebKitWebView {
 	if b == nil || len(b.tabs) == 0 || b.activeTab < 0 || b.activeTab >= len(b.tabs) {
 		return nil
@@ -133,6 +187,13 @@ func UpdateTabState(view *C.WebKitWebView, cTitle *C.char, isFinished C.int, isF
 				tab.state = TabFailed
 			} else if isFinished == 1 {
 				tab.state = TabLoaded
+				if strings.HasPrefix(tab.uri, "wimgo://") {
+					break
+				}
+				if globalHistory != nil && tab.uri != "" {
+					globalHistory.AddEntry(tab.uri, tab.title)
+					appWindow.RefreshHistoryTabs()
+				}
 			}
 			break
 		}

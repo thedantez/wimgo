@@ -117,6 +117,11 @@ func ExecuteCommand(cmd string, args []string) {
 		if appWindow != nil {
 			appWindow.PrevTab()
 		}
+	case "history":
+		if globalHistory != nil {
+			pageHTML := globalHistory.RenderHistoryHTML()
+			appWindow.NewTabWithHTML("history", pageHTML)
+		}
 	case "set":
 		if len(args) < 2 {
 			slog.Warn("command set requires key & value")
