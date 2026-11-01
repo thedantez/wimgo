@@ -1,6 +1,6 @@
 # Maintainer: thedantez (github)
 pkgname=wimgo-git
-pkgver=r26.86d4316
+pkgver=r40.f1245df
 pkgrel=1
 pkgdesc="Minimalist, keyboard-driven WebKitGTK browser"
 arch=('x86_64')

@@ -3,12 +3,12 @@
 pkgname = wimgo-git
 pkgbase = wimgo-git
 xdata = pkgtype=pkg
-pkgver = r26.86d4316-1
+pkgver = r40.f1245df-1
 pkgdesc = Minimalist, keyboard-driven WebKitGTK browser
 url = https://github.com/thedantez/wimgo
-builddate = 1792940519
+builddate = 1793511674
 packager = Unknown Packager
-size = 2840516
+size = 2891716
 arch = x86_64
 license = custom
 conflict = wimgo
