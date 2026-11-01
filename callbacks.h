@@ -4,9 +4,11 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
-WebKitWebView* create_custom_webview(const char *data_dir,
-                                     const char *cache_dir,
-                                     gboolean ephemeral);
+void init_global_context(const char *data_dir,
+                         const char *cache_dir,
+                         gboolean ephemeral);
+
+WebKitWebView* create_custom_webview(void);
 
 void set_webview_webgl(WebKitWebView *web_view, gboolean flag);
 

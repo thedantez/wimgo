@@ -1,11 +1,16 @@
 #include "callbacks.h"
 #include "_cgo_export.h"
 
-WebKitWebView* create_custom_webview(const char *data_dir,
-                                     const char *cache_dir,
-                                     gboolean ephemeral) {
-    WebKitWebsiteDataManager *manager;
+static WebKitWebContext *global_context = NULL;
 
+void init_global_context(const char *data_dir,
+                         const char *cache_dir,
+                         gboolean ephemeral) {
+    if (global_context != NULL) {
+        return;
+    }
+
+    WebKitWebsiteDataManager *manager;
     if (ephemeral) {
         manager = webkit_website_data_manager_new_ephemeral();
     } else {
@@ -14,15 +19,29 @@ WebKitWebView* create_custom_webview(const char *data_dir,
                 "base-cache-directory", cache_dir,
                 NULL
                 );
+        WebKitCookieManager *cookie_mgr = webkit_website_data_manager_get_cookie_manager(manager);
+        gchar *cookie_file = g_build_filename(data_dir, "cookie.db", NULL);
+        webkit_cookie_manager_set_persistent_storage(
+                cookie_mgr,
+                cookie_file,
+                WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
+                );
+        webkit_cookie_manager_set_accept_policy(
+                cookie_mgr,
+                WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS
+                );
+        g_free(cookie_file);
     }
 
-    WebKitWebContext *context = webkit_web_context_new_with_website_data_manager(manager);
+    global_context = webkit_web_context_new_with_website_data_manager(manager);
     g_object_unref(manager);
+}
 
-    WebKitWebView *view = WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(context));
-    g_object_unref(context);
-
-    return view;
+WebKitWebView* create_custom_webview() {
+    if (global_context == NULL) {
+        return WEBKIT_WEB_VIEW(webkit_web_view_new());
+    }
+    return WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(global_context));
 }
 
 gboolean on_load_failed(WebKitWebView *web_view,

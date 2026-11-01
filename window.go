@@ -53,7 +53,7 @@ func (b *BrowserWindow) NewTab(url string) {
 	cCache := C.CString(cacheDir)
 	defer C.free(unsafe.Pointer(cCache))
 
-	webView := C.create_custom_webview(cData, cCache, C.gboolean(0))	// window for view web
+	webView := C.create_custom_webview()	// window for view web
 	C.apply_webview_dark_mode((*C.WebKitWebView)(unsafe.Pointer(webView)))	// enabling dark scheme
 
 	cSignalFailed := C.CString("load-failed")		// if web can't load
@@ -520,6 +520,11 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	defer C.free(unsafe.Pointer(cData))
 	cCache := C.CString(cacheDir)
 	defer C.free(unsafe.Pointer(cCache))
+	var cEphemeral C.gboolean
+	if ephemeral {
+		cEphemeral = 1
+	}
+	C.init_global_context(cData, cCache, cEphemeral)
 
 	cSignalDestroy := C.CString("destroy")	// destroy when window was closed
 	defer C.free(unsafe.Pointer(cSignalDestroy))
