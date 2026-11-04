@@ -5,7 +5,7 @@ package main
 */
 import "C"
 
-import(
+import (
 	_ "embed"
 	"fmt"
 	"log/slog"
@@ -14,14 +14,10 @@ import(
 //go:embed hints.js
 var hintsJS string
 
-var (
-	hintsInjected bool
-	hintBuffer	  string
-)
+var hintBuffer string
 
 //export ResetHintsState
 func ResetHintsState() {
-	hintsInjected = false
 	if currentMode == ModeHints {
 		ExitHints()
 	}
@@ -35,13 +31,13 @@ func FinishHintAction(targetMode C.int) {
 		if appWindow != nil {
 			appWindow.SetStatus("[INSERT] ")
 		}
-		slog.Info("hint targeted input, mode switched to INSERT")
+		slog.Info("hint targeted input: switched to INSERT")
 	} else {
 		currentMode = ModeNormal
 		if appWindow != nil {
 			appWindow.SetStatus("[NORMAL] ")
 		}
-		slog.Info("hint completed, mode switched to NORMAL")
+		slog.Info("hint completed: switched to NORMAL")
 	}
 }
 
@@ -51,16 +47,12 @@ func StartHints() {
 	}
 
 	hintBuffer = ""
-
-	if !hintsInjected {
-		appWindow.RunJS(hintsJS)
-		hintsInjected = true
-	}
-
-	appWindow.RunJS("window.__wimgoHints && window.__wimgoHints.show();")
 	currentMode = ModeHints
 	appWindow.SetStatus("[HINTS] ")
 	slog.Info("mode switched to HINTS")
+
+	// Один атомарный вызов: инициализирует __wimgoHints и сразу внутри вызывает .show()
+	appWindow.RunJS(hintsJS)
 }
 
 func ProcessHintKey(char rune) {
@@ -73,7 +65,10 @@ func ProcessHintKey(char rune) {
 
 	jsCmd := fmt.Sprintf(`
 	(function() {
-		if (!window.__wimgoHints) return;
+		if (!window.__wimgoHints) {
+			document.title = '__wimgo_hint_done__';
+			return;
+		}
 		var res = window.__wimgoHints.filter('%s');
 		if (res === 'click:insert') {
 			document.title = '__wimgo_hint_insert__';
@@ -82,6 +77,7 @@ func ProcessHintKey(char rune) {
 		}
 	})();
 	`, hintBuffer)
+
 	appWindow.RunJS(jsCmd)
 }
 

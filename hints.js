@@ -5,6 +5,24 @@
 
     const HINT_CHARS = "asdfghjkl";
 
+    function setBadgeText(badge, donePart, restPart) {
+        while (badge.firstChild) {
+            badge.removeChild(badge.firstChild);
+        }
+        if (donePart) {
+            const doneSpan = document.createElement("span");
+            doneSpan.style.color = "#64748b";
+            doneSpan.style.fontWeight = "normal";
+            doneSpan.textContent = donePart;
+            badge.appendChild(doneSpan);
+        }
+        const restSpan = document.createElement("span");
+        restSpan.style.color = "#0f172a";
+        restSpan.style.fontWeight = "700";
+        restSpan.textContent = restPart;
+        badge.appendChild(restSpan);
+    }
+
     window.__wimgoHints = {
         hints: [],
         container: null,
@@ -24,7 +42,26 @@
         show() {
             this.clear();
 
-            const selector = 'a[href], button, input:not([type="hidden"]), textarea, select, [role="button"], [role="link"], [onclick], [tabindex]';
+            const selector = [
+                'a[href]',
+                'button',
+                'input:not([type="hidden"])',
+                'textarea',
+                'select',
+                'summary',
+                '[role="button"]',
+                '[role="link"]',
+                '[role="tab"]',
+                '[role="menuitem"]',
+                '[role="checkbox"]',
+                '[role="option"]',
+                '[role="listitem"]',
+                '[onclick]',
+                '[jsaction]',
+                '[tabindex]:not([tabindex="-1"])',
+                '[contenteditable="true"]'
+            ].join(', ');
+
             const elements = Array.from(document.querySelectorAll(selector));
             const visible = [];
             const vw = window.innerWidth;
@@ -48,7 +85,7 @@
             this.container = document.createElement("div");
             this.container.id = "wimgo-hints-container";
             this.container.style.cssText = `
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -58,27 +95,25 @@
             `;
 
             const keys = this.generateKeys(visible.length);
-            const scrollX = window.scrollX;
-            const scrollY = window.scrollY;
 
             this.hints = visible.map((item, i) => {
                 const badge = document.createElement("span");
                 const hintKey = keys[i];
 
                 badge.style.cssText = `
-                    position: absolute;
-                    left: ${Math.max(0, item.rect.left + scrollX)}px;
-                    top: ${Math.max(0, item.rect.top + scrollY)}px;
-                    background: rgba(255, 204, 11, 0.78);
+                    position: fixed;
+                    left: ${Math.max(0, item.rect.left)}px;
+                    top: ${Math.max(0, item.rect.top)}px;
+                    background: rgba(254, 240, 138, 0.82);
                     color: #0f172a;
                     font-family: monospace;
                     font-size: 11px;
                     font-weight: 700;
                     line-height: 12px;
                     padding: 2px 4px;
-                    border: none;
+                    border: 1px solid rgba(15, 23, 42, 0.2);
                     border-radius: 3px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
                     pointer-events: none;
                     user-select: none;
                     text-transform: lowercase;
@@ -90,7 +125,7 @@
                 return { key: hintKey, el: item.el, badge: badge };
             });
 
-            document.body.appendChild(this.container);
+            (document.body || document.documentElement).appendChild(this.container);
         },
 
         filter(prefix) {
@@ -117,7 +152,7 @@
                         h.badge.style.display = "inline-block";
                         const donePart = prefix;
                         const restPart = h.key.slice(prefix.length);
-                        h.badge.innerHTML = `<span style="color: #64748b; font-weight: normal;">${donePart}</span><span style="color: #000000; font-weight: bold;">${restPart}</span>`;
+                        setBadgeText(h.badge, donePart, restPart);
                     } else {
                         h.badge.style.display = "none";
                     }
@@ -137,4 +172,6 @@
             this.hints = [];
         }
     };
+
+    window.__wimgoHints.show();
 })();
