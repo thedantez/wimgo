@@ -118,9 +118,13 @@ func ExecuteCommand(cmd string, args []string) {
 			appWindow.PrevTab()
 		}
 	case "history":
-		if globalHistory != nil {
+		if globalHistory != nil && appWindow != nil {
 			pageHTML := globalHistory.RenderHistoryHTML()
 			appWindow.NewTabWithHTML("history", pageHTML)
+		}
+	case "print":
+		if appWindow != nil {
+			appWindow.Print()
 		}
 	case "set":
 		if len(args) < 2 {

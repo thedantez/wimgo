@@ -152,3 +152,9 @@ void inject_js(WebKitWebView *web_view, const char *js_code) {
     webkit_user_content_manager_add_script(manager, script);
     webkit_user_script_unref(script);
 }
+
+void print_page(WebKitWebView *web_view) {
+    WebKitPrintOperation *op = webkit_print_operation_new(web_view);
+    webkit_print_operation_run_dialog(op, NULL);
+    g_object_unref(op);
+}

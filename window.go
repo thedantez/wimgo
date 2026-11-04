@@ -85,6 +85,11 @@ func (b *BrowserWindow) RefreshHistoryTabs() {
 	}
 }
 
+// funcs for print
+func (b *BrowserWindow) Print() {
+	C.print_page(b.ActiveWebView())
+}
+
 // funcs for manipulating tabs
 func (b *BrowserWindow) ActiveWebView() *C.WebKitWebView {
 	if b == nil || len(b.tabs) == 0 || b.activeTab < 0 || b.activeTab >= len(b.tabs) {

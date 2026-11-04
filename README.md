@@ -33,6 +33,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `:unbind <key>` | unbind `<key>` |
 | `:bind-default`/`:reset-default` | reset to default factory mapping |
 | `:history` | show history (limit: 100 previous pages) |
+| `:print` | print current page |
 
 # configuration
 wimgo uses a plain text command-driven configuration file located at `~/.config/wimgo/config` (creating in first start)
