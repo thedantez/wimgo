@@ -34,6 +34,7 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 | `:bind-default`/`:reset-default` | reset to default factory mapping |
 | `:history` | show history (limit: 100 previous pages) |
 | `:print` | print current page |
+| `:cd`/`:clear-downloads` | clear downloads bar (clear top bar) |
 
 # configuration
 wimgo uses a plain text command-driven configuration file located at `~/.config/wimgo/config` (creating in first start)
@@ -82,6 +83,7 @@ All variables (w/out bindings) can be used via:
 | `J` | `tab_next` | goto next tab (goto right) |
 | `K` | `tab_prev` | goto previous tab (goto left) |
 | `d` | `tab_close` | close active tab |
+| `cd` | `clear_downloads` | clear downloads bar |
 
 # installing (building from source)
 ## dependencies

@@ -5,6 +5,8 @@ package main
 */
 import "C"
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"log/slog"
 	"strconv"
@@ -12,6 +14,37 @@ import (
 
 func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & parse it
 	raw = strings.TrimSpace(raw)
+
+	if currentMode == ModeDownloadPath {
+		if raw == "" {
+			cancelDownload()
+			return
+		}
+
+		pendingDownloadPath = raw
+		checkDownloadPath()
+		return
+	}
+
+	if currentMode == ModeDownloadConfirmDir {
+		if strings.ToLower(raw) == "y" || strings.ToLower(raw) == "yes" {
+			os.MkdirAll(filepath.Dir(pendingDownloadPath), 0755)
+			checkDownloadFileOverwrite()
+		} else {
+			cancelDownload()
+		}
+		return
+	}
+
+	if currentMode == ModeDownloadConfirmOverwrite {
+		if strings.ToLower(raw) == "y" || strings.ToLower(raw) == "yes" {
+			startDownload()
+		} else {
+			cancelDownload()
+		}
+		return
+	}
+
 	if len(raw) == 0 { 		// if command not exists
 		if appWindow != nil {
 			appWindow.CloseCommand()
@@ -191,6 +224,13 @@ func ExecuteCommand(cmd string, args []string) {
 	case "config-load":
 		LoadConfig()
 		slog.Info("config loaded")
+	case "view-source":
+		if appWindow != nil {
+			//appWindow.RunJS("")
+		}
+	case "clear-downloads", "cd":
+		ClearDownloads()
+		slog.Info("downloads list cleared")
 	case "stop":
 		appWindow.StopLoading()
 		slog.Info("stop loading")

@@ -35,6 +35,11 @@ void init_global_context(const char *data_dir,
 
     global_context = webkit_web_context_new_with_website_data_manager(manager);
     g_object_unref(manager);
+
+    g_signal_connect(global_context,    // for download dialog
+                    "download-started",
+                    G_CALLBACK(on_download_started),
+                    NULL);
 }
 
 WebKitWebView* create_custom_webview() {
@@ -42,6 +47,36 @@ WebKitWebView* create_custom_webview() {
         return WEBKIT_WEB_VIEW(webkit_web_view_new());
     }
     return WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(global_context));
+}
+
+// code for download
+struct label_update_data {
+	GtkLabel *label;
+	GtkWidget *widget;
+	char *text;
+	int show;
+};
+
+static gboolean update_label_idle(gpointer user_data) {
+	struct label_update_data *data = (struct label_update_data *)user_data;
+	if (data->show) {
+		gtk_widget_show(data->widget);
+		gtk_label_set_text(data->label, data->text);
+	} else {
+		gtk_widget_hide(data->widget);
+	}
+	free(data->text);
+	free(data);
+	return FALSE;
+}
+
+void schedule_label_update(GtkWidget *widget, const char *text, int show) {
+	struct label_update_data *data = malloc(sizeof(struct label_update_data));
+	data->widget = widget;
+	data->label = GTK_LABEL(widget);
+	data->text = strdup(text);
+	data->show = show;
+	g_idle_add(update_label_idle, data);
 }
 
 gboolean on_load_failed(WebKitWebView *web_view,
@@ -157,4 +192,16 @@ void print_page(WebKitWebView *web_view) {
     WebKitPrintOperation *op = webkit_print_operation_new(web_view);
     webkit_print_operation_run_dialog(op, NULL);
     g_object_unref(op);
+}
+
+extern void HandleDownloadRequest(char* url, char* suggested_filename);
+
+void on_download_started(WebKitWebContext *context,
+                         WebKitDownload *download,
+                         gpointer user_data) {
+    WebKitURIRequest *req= webkit_download_get_request(download);
+    const gchar *uri = webkit_uri_request_get_uri(req);
+
+    HandleDownloadRequest((char*)uri, (char*)"");
+    webkit_download_cancel(download);
 }

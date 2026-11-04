@@ -19,17 +19,22 @@ import ( 	// import Go's libs
 )
 
 type BrowserWindow struct {
-	window 		*C.GtkWidget
-	notebook	*C.GtkNotebook
-	tabBarLabel *C.GtkWidget
-	//webView 	*C.WebKitWebView
-	statusLabel *C.GtkWidget
-	cmdEntry	*C.GtkWidget
-	infoLabel	*C.GtkWidget
-	tabs		[]*BrowserTab
-	activeTab	int
+	window 			 *C.GtkWidget
+	notebook		 *C.GtkNotebook
+	tabBarLabel 	 *C.GtkWidget
+	downloadBarLabel *C.GtkWidget
+	statusLabel 	 *C.GtkWidget
+	cmdEntry		 *C.GtkWidget
+	infoLabel		 *C.GtkWidget
+	tabs			 []*BrowserTab
+	activeTab		 int
 }
 
+type BarItem struct {
+	Prefix	string
+	Title	string
+	Suffix	string
+}
 
 // funcs for command :history
 func (b *BrowserWindow) LoadHTML(htmlContent, baseURI string) {
@@ -68,7 +73,7 @@ func (b *BrowserWindow) RefreshHistoryTabs() {
 	escapedJS = strings.ReplaceAll(escapedJS, "`", "\\`")
 	escapedJS = strings.ReplaceAll(escapedJS, "${", "\\${")
 
-	jsScript := fmt.Sprint(`
+	jsScript := fmt.Sprintf(`
 	(function() {
 		var list = document.getElementById("history-list");
 		if (list) {
@@ -88,6 +93,15 @@ func (b *BrowserWindow) RefreshHistoryTabs() {
 // funcs for print
 func (b *BrowserWindow) Print() {
 	C.print_page(b.ActiveWebView())
+}
+
+// func for get current uri (uses in command.go)
+func (b *BrowserWindow) CurrentUri() string {
+	cStr := C.webkit_web_view_get_uri(b.ActiveWebView())
+	if cStr == nil {
+		return ""
+	}
+	return C.GoString(cStr)
 }
 
 // funcs for manipulating tabs
@@ -258,12 +272,18 @@ func (b *BrowserWindow) PrevTab() {
 	b.SwitchTab(prev)
 }
 
-func (b *BrowserWindow) UpdateTabBar() {
-	if len(b.tabs) <= 1 {
-		C.gtk_widget_hide(b.tabBarLabel)
+// func for render bars: downloadBarLabel & tabBarLabel
+func (b *BrowserWindow) renderBar(targetWidget *C.GtkWidget, items []BarItem, minToShow int) {
+	if b == nil || targetWidget == nil {
 		return
 	}
-	C.gtk_widget_show(b.tabBarLabel)
+
+	if len(items) < minToShow {
+		cEmpty := C.CString("")
+		C.schedule_label_update(targetWidget, cEmpty, 0)
+		C.free(unsafe.Pointer(cEmpty))
+		return
+	}
 
 	var cW, cH C.gint
 	C.gtk_window_get_size((*C.GtkWindow)(unsafe.Pointer(b.window)), &cW, &cH)
@@ -277,58 +297,91 @@ func (b *BrowserWindow) UpdateTabBar() {
 		totalCols = 40
 	}
 
-	numTabs := len(b.tabs)
-	slotWidth := totalCols / numTabs
+	slotWidth := totalCols / len(items)
 	if slotWidth < 12 {
 		slotWidth = 12
 	}
 
 	var barText string
-	for i, tab := range b.tabs {
-		var stateIcon string
-		switch tab.state {
-			case TabLoading:
-				stateIcon = "-"
-			case TabLoaded:
-				stateIcon = "o"
-			case TabFailed:
-				stateIcon = "x"
-		}
-
-		indicator := " "
-		if i == b.activeTab {
-			indicator = "*"
-		}
-
-		prefix := fmt.Sprintf("[%d:%s", i+1, stateIcon)
-		suffix := fmt.Sprintf("]%s", indicator)
-		maxTitleLen := slotWidth - len(prefix) - len(suffix) - 1
+	for _, it := range items {
+		maxTitleLen := slotWidth - len(it.Prefix) - len(it.Suffix) - 1
 		if maxTitleLen < 3 {
 			maxTitleLen = 3
 		}
 
-		displayTitle := tab.title
+		displayTitle := it.Title
 		if len(displayTitle) > maxTitleLen {
 			displayTitle = displayTitle[:maxTitleLen-2] + ".."
 		}
 
-		item := fmt.Sprintf("%s %s%s", prefix, displayTitle, suffix)
-
-		if len(item) < slotWidth {
-			item += strings.Repeat(" ", slotWidth - len(item))
+		formatted := fmt.Sprintf("%s %s%s", it.Prefix, displayTitle, it.Suffix)
+		if len(formatted) < slotWidth {
+			formatted += strings.Repeat(" ", slotWidth - len(formatted))
 		}
-		barText += item
+		barText += formatted
 	}
 
 	cText := C.CString(barText)
+	C.schedule_label_update(targetWidget, cText, 1)
 	defer C.free(unsafe.Pointer(cText))
-	C.gtk_label_set_text((*C.GtkLabel)(unsafe.Pointer(b.tabBarLabel)), cText)
+}
+
+func (b *BrowserWindow) UpdateDownloadBar() {
+	if b == nil {
+		return
+	}
+	dlMu.Lock()
+	var items []BarItem
+	idx := 1
+	for _, d := range downloads {
+		if d.State == DlFinished {
+			continue
+		}
+		status := fmt.Sprintf(" %d%%]", d.Progress)
+		if d.State == DlFailed {
+			status = " !]"
+		}
+		items = append(items, BarItem{
+			Prefix: fmt.Sprintf("[%d:", idx),
+			Title:  d.Name,
+			Suffix: status,
+		})
+		idx++
+	}
+	dlMu.Unlock()
+	b.renderBar(b.downloadBarLabel, items, 1)
+}
+
+func (b *BrowserWindow) UpdateTabBar() {
+	if b == nil {
+		return
+	}
+	var items []BarItem
+	for i, tab := range b.tabs {
+		stateIcon := "-"
+		if tab.state == TabLoaded {
+			stateIcon = "o"
+		} else if tab.state == TabFailed {
+			stateIcon = "x"
+		}
+		ind := " "
+		if i == b.activeTab {
+			ind = "*"
+		}
+		items = append(items, BarItem{
+			Prefix: fmt.Sprintf("[%d:%s", i+1, stateIcon),
+			Title:  tab.title,
+			Suffix: fmt.Sprintf("]%s", ind),
+		})
+	}
+	b.renderBar(b.tabBarLabel, items, 2)
 }
 
 //export TriggerUpdateTabBar
 func TriggerUpdateTabBar() {
 	if appWindow != nil {
 		appWindow.UpdateTabBar()
+		appWindow.UpdateDownloadBar()
 	}
 }
 
@@ -354,6 +407,7 @@ func (b *BrowserWindow) SetWebGL(flag bool) {
 func (b *BrowserWindow) Show() {
 	C.gtk_widget_show_all(b.window)
 	C.gtk_widget_hide(b.cmdEntry)
+	C.gtk_widget_hide(b.downloadBarLabel)
 	C.gtk_main()
 }
 
@@ -558,6 +612,13 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	C.gtk_label_set_ellipsize((*C.GtkLabel)(unsafe.Pointer(tabBarLabel)), C.PANGO_ELLIPSIZE_END)
 	C.gtk_widget_set_size_request((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), 10, -1)
 
+	cEmptyDl := C.CString("")
+	defer C.free(unsafe.Pointer(cEmptyDl))
+	downloadBarLabel := C.gtk_label_new(cEmptyDl)
+	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(downloadBarLabel)), C.GTK_ALIGN_START)
+	C.gtk_label_set_ellipsize((*C.GtkLabel)(unsafe.Pointer(downloadBarLabel)), C.PANGO_ELLIPSIZE_END)
+	C.gtk_widget_set_size_request((*C.GtkWidget)(unsafe.Pointer(downloadBarLabel)), 10, -1)
+
 	keyPress := C.CString("key-press-event")	// key press handler
 	defer C.free(unsafe.Pointer(keyPress))
 	C.g_signal_connect_data(	// connect w/ C-world
@@ -712,15 +773,14 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 		(*C.GtkWidget)(unsafe.Pointer(mainbox)),
 	)
 
-	// old method
-	//C.gtk_box_pack_start(	// packing webView window to main box
-	//	(*C.GtkBox)(unsafe.Pointer(mainbox)),
-	//	(*C.GtkWidget)(unsafe.Pointer(webView)),
-	//	1,	// expand = true
-	//	1,	// fill = true
-	//	0,	// padding = 0
-	//)
-	// new version
+	C.gtk_box_pack_start(	// packing label w/ downloads to mainbox
+		(*C.GtkBox)(unsafe.Pointer(mainbox)),
+		(*C.GtkWidget)(unsafe.Pointer(downloadBarLabel)),
+		0,	// expand = false
+		0,	// fill = false
+		0,	// padding = 0
+	)
+
 	C.gtk_box_pack_start(	// packing notebook to mainbox like web view
 		(*C.GtkBox)(unsafe.Pointer(mainbox)),
 		(*C.GtkWidget)(unsafe.Pointer(notebook)),
@@ -771,13 +831,14 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 
 	// creating appWindow global variable & pack all
 	appWindow = &BrowserWindow{		// modify appWindow variable for return & save changes in global level
-		window: 		window,
-		notebook:		notebook,
-		tabBarLabel:	(*C.GtkWidget)(unsafe.Pointer(tabBarLabel)),
-		statusLabel: 	(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
-		cmdEntry:		(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
-		infoLabel: 		(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
-		activeTab:		0,
+		window: 			window,
+		notebook:			notebook,
+		tabBarLabel:		(*C.GtkWidget)(unsafe.Pointer(tabBarLabel)),
+		downloadBarLabel:	(*C.GtkWidget)(unsafe.Pointer(downloadBarLabel)),
+		statusLabel: 		(*C.GtkWidget)(unsafe.Pointer(statusLabel)),
+		cmdEntry:			(*C.GtkWidget)(unsafe.Pointer(cmdEntry)),
+		infoLabel: 			(*C.GtkWidget)(unsafe.Pointer(infoLabel)),
+		activeTab:			0,
 	}
 	appWindow.NewTab(url)
 	appWindow.SetWebGL(appConfig.WebGL)

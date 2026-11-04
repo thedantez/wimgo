@@ -2,11 +2,14 @@ package main
 
 type Mode int
 const (
-	ModeNormal = iota	// 0
-	ModeInsert			// 1
-	ModeVisible			// 2
-	ModeCommand			// 3
-	ModeHints			// 4
+	ModeNormal = iota		   	 // 0
+	ModeInsert				   	 // 1
+	ModeVisible				   	 // 2
+	ModeCommand				   	 // 3
+	ModeHints				   	 // 4
+	ModeDownloadPath		   	 // 5
+	ModeDownloadConfirmDir 		 // 6
+	ModeDownloadConfirmOverwrite // 7
 )
 var currentMode = ModeNormal
 

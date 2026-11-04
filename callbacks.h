@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
+#include <stdlib.h>
 
 void init_global_context(const char *data_dir,
                          const char *cache_dir,
@@ -40,4 +41,12 @@ void on_notify_title(WebKitWebView *web_view, GParamSpec *pspec, gpointer user_d
 void inject_js(WebKitWebView *web_view, const char *js_code);
 
 void print_page(WebKitWebView *web_view);
+
+extern void HandleDownloadRequest(char* url, char* suggested_filename);
+
+void on_download_started(WebKitWebContext *context,
+                         WebKitDownload *download,
+                         gpointer user_data);
+
+void schedule_label_update(GtkWidget *widget, const char *text, int show);
 #endif

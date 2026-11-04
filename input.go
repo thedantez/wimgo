@@ -46,7 +46,7 @@ func splitCountAndCmd(buf string) (int, string) {
 func processNormalChord(buf string) (done bool, pending bool) {
 	count, cmd := splitCountAndCmd(buf)
 
-	if cmd == "" || cmd == "g" || cmd == "z" {
+	if cmd == "" || cmd == "g" || cmd == "z" || cmd == "c" {
 		return false, true
 	}
 
@@ -91,6 +91,8 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.PrevTab()
 	case "tab_close":
 		appWindow.CloseTab(appWindow.activeTab)
+	case "clear_downloads":
+		ClearDownloads()
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}

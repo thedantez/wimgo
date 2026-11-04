@@ -16,7 +16,8 @@ type Config struct {
 	ChordTimeout	int
 	ZoomStep		float64
 	WebGL			bool
-	KeyBindings map[string]string
+	Proxy			string
+	KeyBindings 	map[string]string
 }
 
 var appConfig = Config{		// default
@@ -50,6 +51,7 @@ func DefaultKeyBindings() map[string]string{
 		//"zo":	"zoom_out",
 		"=":	"reset_zoom",
 		//"zz":	"reset_zoom",
+		"cd":	"clear_downloads",
 	}
 }
 
