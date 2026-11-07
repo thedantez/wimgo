@@ -262,9 +262,9 @@ func ExecuteCommand(cmd string, args []string) {
 	case "config-load":
 		LoadConfig()
 		slog.Info("config loaded")
-	case "view-source":
+	case "view-source", "vs":
 		if appWindow != nil {
-			//appWindow.RunJS("")
+			appWindow.ViewSource()
 		}
 	case "clear-downloads", "cd":
 		ClearDownloads()

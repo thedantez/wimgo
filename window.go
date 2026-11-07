@@ -588,6 +588,18 @@ func init() {
 	//os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")	// off video render
 }
 
+// func for viewing source
+func (b *BrowserWindow) ViewSource() {
+	js := `(function() {
+		var src = document.documentElement.outerHTML;
+		document.open();
+		document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#000;color:#e0e0e0;font-family:monospace;font-size:13px;padding:20px;white-space:pre-wrap;word-break:break-all;margin:0;}</style></head><body></body></html>');
+		document.close();
+		document.body.textContent = src;
+	})();`
+	b.RunJS(js)
+}
+
 // func for inject JS
 func (b *BrowserWindow) RunJS(script string) {
 	cScript := C.CString(script)
@@ -596,30 +608,30 @@ func (b *BrowserWindow) RunJS(script string) {
 		b.ActiveWebView(),
 		cScript,
 		nil, nil, nil)
-}
+	}
 
-var appWindow *BrowserWindow	// global pointer for changes in window & ui
+	var appWindow *BrowserWindow	// global pointer for changes in window & ui
 
-func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
-	slog.Info("starting creating window...")
+	func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
+		slog.Info("starting creating window...")
 
-	// main window GTK
-	C.gtk_init(nil, nil)	// initializing GTK
-	C.enable_dark_theme() 	// setting dark theme
+		// main window GTK
+		C.gtk_init(nil, nil)	// initializing GTK
+		C.enable_dark_theme() 	// setting dark theme
 
-	window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
-	C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
+		window := C.gtk_window_new(C.GTK_WINDOW_TOPLEVEL)	// creating window
+		C.gtk_window_set_default_size((*C.GtkWindow)(unsafe.Pointer(window)), 1280, 720)
 
-	notebook := (*C.GtkNotebook)(unsafe.Pointer(C.gtk_notebook_new()))	// creating list of tabs
-	C.gtk_notebook_set_show_tabs(notebook, C.FALSE)
-	C.gtk_notebook_set_show_border(notebook, C.FALSE)
+		notebook := (*C.GtkNotebook)(unsafe.Pointer(C.gtk_notebook_new()))	// creating list of tabs
+		C.gtk_notebook_set_show_tabs(notebook, C.FALSE)
+		C.gtk_notebook_set_show_border(notebook, C.FALSE)
 
-	cEmptyBar := C.CString("")
-	defer C.free(unsafe.Pointer(cEmptyBar))
-	tabBarLabel := C.gtk_label_new(cEmptyBar)
-	C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), C.GTK_ALIGN_START)
-	C.gtk_label_set_ellipsize((*C.GtkLabel)(unsafe.Pointer(tabBarLabel)), C.PANGO_ELLIPSIZE_END)
-	C.gtk_widget_set_size_request((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), 10, -1)
+		cEmptyBar := C.CString("")
+		defer C.free(unsafe.Pointer(cEmptyBar))
+		tabBarLabel := C.gtk_label_new(cEmptyBar)
+		C.gtk_widget_set_halign((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), C.GTK_ALIGN_START)
+		C.gtk_label_set_ellipsize((*C.GtkLabel)(unsafe.Pointer(tabBarLabel)), C.PANGO_ELLIPSIZE_END)
+		C.gtk_widget_set_size_request((*C.GtkWidget)(unsafe.Pointer(tabBarLabel)), 10, -1)
 
 	cEmptyDl := C.CString("")
 	defer C.free(unsafe.Pointer(cEmptyDl))
