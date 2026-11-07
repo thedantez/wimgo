@@ -8,7 +8,6 @@ import "C"
 import (
 	_ "embed"
 	"fmt"
-	"log/slog"
 )
 
 //go:embed hints.js
@@ -31,13 +30,11 @@ func FinishHintAction(targetMode C.int) {
 		if appWindow != nil {
 			appWindow.SetStatus("[INSERT] ")
 		}
-		slog.Info("hint targeted input: switched to INSERT")
 	} else {
 		currentMode = ModeNormal
 		if appWindow != nil {
 			appWindow.SetStatus("[NORMAL] ")
 		}
-		slog.Info("hint completed: switched to NORMAL")
 	}
 }
 
@@ -49,7 +46,6 @@ func StartHints() {
 	hintBuffer = ""
 	currentMode = ModeHints
 	appWindow.SetStatus("[HINTS] ")
-	slog.Info("mode switched to HINTS")
 
 	// Один атомарный вызов: инициализирует __wimgoHints и сразу внутри вызывает .show()
 	appWindow.RunJS(hintsJS)
@@ -88,5 +84,4 @@ func ExitHints() {
 	}
 	hintBuffer = ""
 	currentMode = ModeNormal
-	slog.Info("mode switched to NORMAL")
 }

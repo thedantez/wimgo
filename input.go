@@ -108,37 +108,32 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		}
 		if	keyval == 0xff1b {	// esc
 			resetKeyBuffer()
-			return C.TRUE
+			return C.FALSE
 		}
 		if keyBuffer == "" {
 			switch keyval {
 				case 105:	// i
 					currentMode = ModeInsert
 					appWindow.SetStatus("[INSERT] ")
-					slog.Info("mode switched to INSERT")
 					return C.TRUE
 				case 118:	// v
 					currentMode = ModeVisible
 					appWindow.SetStatus("[VISIBLE] ")
-					slog.Info("mode switched to VISIBLE")
 					return C.TRUE
 				case 111:	// o
 					currentMode = ModeCommand
 					appWindow.OpenCommand(":open ")
 					appWindow.SetStatus("[COMMAND] ")
-					slog.Info("detected o")
 					return C.TRUE
 				case 79:	// O
 					currentMode = ModeCommand
 					appWindow.OpenCommand(":open -t ")
 					appWindow.SetStatus("[COMMAND] ")
-					slog.Info("detected O")
 					return C.TRUE
 				case 59:	// ; (if u wanna use : then u should change 59->58)
 					currentMode = ModeCommand
 					appWindow.OpenCommand(":")
 					appWindow.SetStatus("[COMMAND] ")
-					slog.Info("detected :")
 					return C.TRUE
 			}
 			resetKeyBuffer()
@@ -164,7 +159,6 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 	case 4:		// ModeHints
 		if keyval == 0xff1b {		// escape
 			ExitHints()
-			slog.Info("mode switched to NORMAL")
 		}
 		if keyval >= 32 && keyval <= 126 {
 			ProcessHintKey(rune(keyval))
@@ -178,7 +172,7 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 			}
 			currentMode = ModeNormal
 			appWindow.SetStatus("[NORMAL] ")
-			slog.Info("mode switched to NORMAL")
+			return C.TRUE
 		}
 		return C.FALSE
 	}
