@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"sort"
 	"path/filepath"
 	"strings"
 	"fmt"
@@ -148,6 +149,32 @@ set webgl %t`,
 			content += fmt.Sprintf("\nset proxy %s", appConfig.Proxy)
 		}
 	}
+
+	// check if default keybindings uses
+	defaultKeybindings := DefaultKeyBindings()
+	var unboundKeys []string
+	for defKey := range defaultKeybindings {
+		if _, exists := appConfig.KeyBindings[defKey]; !exists {
+			unboundKeys = append(unboundKeys, defKey)
+		}
+	}
+	sort.Strings(unboundKeys)
+	for _, k := range unboundKeys {
+		content += fmt.Sprintf("\nunbind %s", k)
+	}
+
+	var keys []string
+	for k := range appConfig.KeyBindings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	content += "\n\n# keybindings"
+	for _, k := range keys {
+		content += fmt.Sprintf("\nbind %s %s", k, appConfig.KeyBindings[k])
+	}
+	content += "\n"
+
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		slog.Error("failed to write config file", "err", err)
 		return
