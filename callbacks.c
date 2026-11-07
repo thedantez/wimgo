@@ -216,3 +216,40 @@ void on_download_started(WebKitWebContext *context,
     g_object_ref(download);
     g_idle_add(cancel_download_idle, download);
 }
+
+void set_context_proxy(const char *proxy_uri, const char *ignore_hosts) {
+    if (global_context == NULL) return;
+
+    WebKitWebsiteDataManager *manager = webkit_web_context_get_website_data_manager(global_context);
+    if (manager == NULL) return;
+
+    if (proxy_uri == NULL || strlen(proxy_uri) == 0) {
+        webkit_website_data_manager_set_network_proxy_settings(
+                manager,
+                WEBKIT_NETWORK_PROXY_MODE_DEFAULT,
+                NULL
+                );
+        return;
+    }
+
+    gchar **ignore_array = NULL;
+    if (ignore_hosts != NULL && strlen(ignore_hosts) > 0) {
+        ignore_array = g_strsplit(ignore_hosts, ",", -1);
+    }
+
+    WebKitNetworkProxySettings *settings = webkit_network_proxy_settings_new(
+            proxy_uri,
+            (const char * const *)ignore_array
+            );
+
+    webkit_website_data_manager_set_network_proxy_settings(
+            manager,
+            WEBKIT_NETWORK_PROXY_MODE_CUSTOM,
+            settings
+            );
+
+    webkit_network_proxy_settings_free(settings);
+    if (ignore_array != NULL) {
+        g_strfreev(ignore_array);
+    }
+}

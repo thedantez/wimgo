@@ -46,14 +46,15 @@ set scrollStep 100
 bind j scroll_down
 bind k scroll_up
 ```
-| variable | value | example (& default values) |
-| :---: | :---: | :---: |
-| `homePage` | string | `https://google.com` |
-| `searchEngine` | string | `https://google.com/search?q=` |
-| `scrollStep` | integer | 100 |
-| `chordTimeout` | integer | 1200 |
-| `webgl` | bool | true |
-| `bind <key> <value>`| string, string | `h history_back`
+| command | variable | value | example (& default values) |
+| :---: | :---: | :---: | :---: |
+| `set` | `homePage` | string | `https://google.com` |
+| `set` | `searchEngine` | string | `https://google.com/search?q=` |
+| `set` | `scrollStep` | integer | 100 |
+| `set` | `chordTimeout` | integer | 1200 |
+| `set` | `webgl` | bool | true |
+| `set` | `proxy <ip:port> <optional exceptions separated by commas(like url,url,url)>` | string, string | `127.0.0.1:9999` / `127.0.0.1:9999 google.com` |
+| `bind` | `<key> <value>`| string, string | `h history_back` |
 
 All variables (w/out bindings) can be used via:
 - lowerCamelCase (like `homePage`)

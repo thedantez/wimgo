@@ -10,6 +10,7 @@ const (
 	ModeDownloadPath		   	 // 5
 	ModeDownloadConfirmDir 		 // 6
 	ModeDownloadConfirmOverwrite // 7
+	ModeProxyExceptions			 // 8
 )
 var currentMode = ModeNormal
 

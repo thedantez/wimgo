@@ -573,6 +573,15 @@ func UpdateLoadProgress(progress float64) {
 	}
 }
 
+// func for setting proxy
+func (b *BrowserWindow) SetProxy(proxyURI, exceptions string) {
+	cProxy := C.CString(proxyURI)
+	defer C.free(unsafe.Pointer(cProxy))
+	cExc := C.CString(exceptions)
+	defer C.free(unsafe.Pointer(cExc))
+	C.set_context_proxy(cProxy, cExc)
+}
+
 // func for start GTK
 func init() {
 	runtime.LockOSThread()
@@ -842,5 +851,8 @@ func NewWindow(url, dataDir, cacheDir string, ephemeral bool) *BrowserWindow {
 	}
 	appWindow.NewTab(url)
 	appWindow.SetWebGL(appConfig.WebGL)
+	if appConfig.Proxy != "" {
+		appWindow.SetProxy(appConfig.Proxy, appConfig.ProxyExceptions)
+	}
 	return appWindow
 }

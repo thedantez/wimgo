@@ -51,4 +51,7 @@ void on_download_started(WebKitWebContext *context,
                          gpointer user_data);
 
 void schedule_label_update(GtkWidget *widget, const char *text, int show);
+
+void set_context_proxy(const char *proxy_uri, const char *ignore_hosts);
+
 #endif

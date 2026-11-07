@@ -10,7 +10,12 @@ import (
 	"strings"
 	"log/slog"
 	"strconv"
+	"net"
+	"net/url"
+	"fmt"
 )
+
+var pendingProxyURI string
 
 func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & parse it
 	raw = strings.TrimSpace(raw)
@@ -45,6 +50,18 @@ func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & pa
 		return
 	}
 
+	if currentMode == ModeProxyExceptions {
+		cleanExc := strings.ReplaceAll(raw, " ", "")
+		applyProxyConfig(pendingProxyURI, cleanExc)
+		pendingProxyURI = ""
+		if appWindow != nil {
+			appWindow.CloseCommand()
+			currentMode = ModeNormal
+			appWindow.SetStatus("[NORMAL] ")
+		}
+		return
+	}
+
 	if len(raw) == 0 { 		// if command not exists
 		if appWindow != nil {
 			appWindow.CloseCommand()
@@ -69,7 +86,7 @@ func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & pa
 		appWindow.LoadURL(ParseUrl(raw))
 	}
 
-	if appWindow != nil {
+	if appWindow != nil && currentMode != ModeProxyExceptions {
 		appWindow.CloseCommand()
 		currentMode = ModeNormal
 		appWindow.SetStatus("[NORMAL] ")
@@ -188,6 +205,27 @@ func ExecuteCommand(cmd string, args []string) {
 				if appWindow != nil {
 					appWindow.SetWebGL(appConfig.WebGL)
 				}
+			case "proxy":
+				validProxy, err := normalizeProxy(args[1])
+				if err != nil {
+					slog.Warn("invalid proxy address", "input", args[1], "err", err)
+					return
+				}
+				if validProxy == "" {
+					applyProxyConfig("", "")
+					return
+				}
+				if len(args) >= 3 {
+					exc := strings.Join(args[2:], "")
+					applyProxyConfig(validProxy, exc)
+				} else if appWindow == nil {
+					applyProxyConfig(validProxy, "")
+				} else {
+					pendingProxyURI = validProxy
+					currentMode = ModeProxyExceptions
+					appWindow.SetStatus("[EXCEPTIONS] ")
+					appWindow.OpenCommand("localhost,127.0.0.1")
+				}
 			default:
 				slog.Info("unknown args for command set ", "value", args[0], "args", args[1])
 		}
@@ -260,4 +298,53 @@ func ParseUrl(rawURL string) string {
 
 	slog.Info("navigatin to URL", "url", target)
 	return target
+}
+
+func normalizeProxy(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "none" || raw == "off" || raw == "clear" {
+		return "", nil
+	}
+
+	if !strings.Contains(raw, "://") {
+		raw = "http://" + raw
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" && scheme != "socks5" && scheme != "socks4" && scheme != "socks" {
+		return "", fmt.Errorf("unsupported proxy scheme: %s", scheme)
+	}
+
+	host, port, err := net.SplitHostPort(u.Host)
+	if err != nil || host == "" || port == "" {
+		return "", fmt.Errorf("proxy must be in host:port format")
+	}
+
+	return raw, nil
+}
+
+func applyProxyConfig(proxyURI, exceptions string) {
+	appConfig.Proxy = proxyURI
+	appConfig.ProxyExceptions = exceptions
+
+	if proxyURI == "" {
+		os.Unsetenv("HTTP_PROXY")
+		os.Unsetenv("HTTPS_PROXY")
+		os.Unsetenv("NO_PROXY")
+		slog.Info("proxy disabled")
+	} else {
+		os.Setenv("HTTP_PROXY", proxyURI)
+		os.Setenv("HTTPS_PROXY", proxyURI)
+		os.Setenv("NO_PROXY", exceptions)
+		slog.Info("set config parametr", "param", "proxy", "val", proxyURI, "exceptions", exceptions)
+	}
+
+	if appWindow != nil {
+		appWindow.SetProxy(proxyURI, exceptions)
+	}
 }

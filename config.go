@@ -17,6 +17,7 @@ type Config struct {
 	ZoomStep		float64
 	WebGL			bool
 	Proxy			string
+	ProxyExceptions	string
 	KeyBindings 	map[string]string
 }
 
@@ -28,6 +29,7 @@ var appConfig = Config{		// default
 	ZoomStep:		0.25,
 	WebGL:			false,
 	KeyBindings: DefaultKeyBindings(),
+	Proxy:			"",
 }
 
 func DefaultKeyBindings() map[string]string{
@@ -139,6 +141,13 @@ set webgl %t`,
 						appConfig.ScrollStep,
 						appConfig.ChordTimeout,
 						appConfig.WebGL)
+	if appConfig.Proxy != "" {
+		if appConfig.ProxyExceptions != "" {
+			content += fmt.Sprintf("\nset proxy %s %s", appConfig.Proxy, appConfig.ProxyExceptions)
+		} else {
+			content += fmt.Sprintf("\nset proxy %s", appConfig.Proxy)
+		}
+	}
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		slog.Error("failed to write config file", "err", err)
 		return
