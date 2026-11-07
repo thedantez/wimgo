@@ -37,6 +37,8 @@ func DefaultKeyBindings() map[string]string{
 	return	map[string]string{
 		"j":	"scroll_down",
 		"k":	"scroll_up",
+		"l":	"scroll_right",
+		"h":	"scroll_left",
 		"gg":	"scroll_top",
 		"G":	"scroll_bottom",
 		//"gG":	"scroll_bottom",
