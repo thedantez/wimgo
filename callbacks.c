@@ -253,3 +253,4 @@ void set_context_proxy(const char *proxy_uri, const char *ignore_hosts) {
         g_strfreev(ignore_array);
     }
 }
+

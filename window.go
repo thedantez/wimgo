@@ -427,9 +427,57 @@ func (b *BrowserWindow) StopLoading() {
 
 
 // func(-s) to scrolling
-func (b *BrowserWindow) Scroll(deltaX, deltaY int) {		// need to add scroll by Ox: create new func or modify this func
-	jsScript := C.CString(fmt.Sprintf("window.scrollBy(%d, %d)", (deltaX * appConfig.ScrollStep), (deltaY * appConfig.ScrollStep)))
+func (b *BrowserWindow) Scroll(deltaX, deltaY int) {
+	scrollX := deltaX * appConfig.ScrollStep
+	scrollY := deltaY * appConfig.ScrollStep
+
+	// Этот скрипт сканирует видимую область экрана по сетке, находит реальный
+	// скролл-контейнер (даже скрытый внутри Gemini) и сдвигает его.
+	jsCode := fmt.Sprintf(`(function() {
+		var dx = %d, dy = %d;
+
+		function canScroll(el) {
+			if (!el || el === document.body || el === document.documentElement) return false;
+			var s = window.getComputedStyle(el);
+			var overflowY = s.overflowY;
+			var overflowX = s.overflowX;
+
+			var hasScrollStyleY = overflowY === 'auto' || overflowY === 'scroll';
+			var hasScrollStyleX = overflowX === 'auto' || overflowX === 'scroll';
+
+			return (hasScrollStyleY && el.scrollHeight > el.clientHeight) ||
+			       (hasScrollStyleX && el.scrollWidth > el.clientWidth);
+		}
+
+		function findScrollTarget() {
+			var points = [
+				{ x: window.innerWidth / 2, y: window.innerHeight / 2 },
+				{ x: window.innerWidth / 2, y: window.innerHeight / 3 },
+				{ x: window.innerWidth / 2, y: (window.innerHeight * 2) / 3 }
+			];
+
+			for (var p = 0; p < points.length; p++) {
+				var elements = document.elementsFromPoint(points[p].x, points[p].y) || [];
+				for (var i = 0; i < elements.length; i++) {
+					var el = elements[i];
+					while (el && el !== document.body && el !== document.documentElement) {
+						if (canScroll(el)) {
+							return el;
+						}
+						el = el.parentElement;
+					}
+				}
+			}
+			return window;
+		}
+
+		var target = findScrollTarget();
+		target.scrollBy(dx, dy);
+	})();`, scrollX, scrollY)
+
+	jsScript := C.CString(jsCode)
 	defer C.free(unsafe.Pointer(jsScript))
+
 	C.webkit_web_view_run_javascript(
 		b.ActiveWebView(),
 		jsScript,
