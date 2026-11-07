@@ -46,6 +46,44 @@ func splitCountAndCmd(buf string) (int, string) {
 func processNormalChord(buf string) (done bool, pending bool) {
 	count, cmd := splitCountAndCmd(buf)
 
+	if cmd == "soft_reload" && appWindow != nil {
+		if count > 0 && len(appWindow.tabs) >= count {
+			activeTab := appWindow.activeTab
+			appWindow.SwitchTab(count-1)
+			appWindow.Reload()
+			appWindow.SwitchTab(activeTab)
+			return true, false
+		} else if count == 0 {
+			// reloading all tabs
+			activeTab := appWindow.activeTab
+			for i := range appWindow.tabs {
+				appWindow.SwitchTab(i)
+				appWindow.Reload()
+			}
+			appWindow.SwitchTab(activeTab)
+		}
+	}
+
+
+	if cmd == "hard_reload" && appWindow != nil {
+		if count > 0 && len(appWindow.tabs) >= count {
+			activeTab := appWindow.activeTab
+			appWindow.SwitchTab(count-1)
+			appWindow.ReloadBypassCache()
+			appWindow.SwitchTab(activeTab)
+			return true, false
+		} else if count == 0 {
+			// reloading all tabs
+			activeTab := appWindow.activeTab
+			for i := range appWindow.tabs {
+				appWindow.SwitchTab(i)
+				appWindow.ReloadBypassCache()
+			}
+			appWindow.SwitchTab(activeTab)
+		}
+	}
+
+
 	if cmd == "" || cmd == "g" || cmd == "z" || cmd == "c" {
 		return false, true
 	}

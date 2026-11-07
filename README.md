@@ -62,6 +62,11 @@ All variables (w/out bindings) can be used via:
 - snake_case     (like `home_page`)
 - lowerflatcase  (like `homepage`)
 
+# keybindings
+u can use multipled keybindings like `<num><keybind>`
+for example u can press `3j` then `j` will emulate 3 presses
+or u can use `0r`/`0R` for soft reload / hard reload in all tabs
+
  default keybindings & actions
 | key    | cmd           | action |
 | :---:  | :---:         | :---: |
