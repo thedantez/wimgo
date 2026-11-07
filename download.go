@@ -7,6 +7,7 @@ package main
 import "C"
 import (
 	"fmt"
+	"encoding/base64"
 	"io"
 	"log/slog"
 	"net/http"
@@ -44,12 +45,22 @@ func HandleDownloadRequest(cURL, cFilename *C.char) {
 	suggestedName := C.GoString(cFilename)
 
 	if suggestedName == "" {
-		parts := strings.Split(strings.Split(rawURL, "?")[0], "/")
-		if len(parts) > 0 {
-			suggestedName = parts[len(parts) - 1]
-		}
-		if suggestedName == "" {
-			suggestedName = "downloaded_file"
+		if strings.HasPrefix(rawURL, "data:image/") {
+			ext := "jpg"
+			if strings.HasPrefix(rawURL, "data:image/png") {
+				ext = "png"
+			} else if strings.HasPrefix(rawURL, "data:image/webp") {
+				ext = "webp"
+			}
+			suggestedName = "image." + ext
+		} else {
+			parts := strings.Split(strings.Split(rawURL, "?")[0], "/")
+			if len(parts) > 0 {
+				suggestedName = parts[len(parts) - 1]
+			}
+			if suggestedName == "" {
+				suggestedName = "downloaded_file"
+			}
 		}
 	}
 
@@ -76,6 +87,11 @@ func cancelDownload() {
 }
 
 func checkDownloadPath() {
+	if info, err := os.Stat(pendingDownloadPath); err == nil && info.IsDir() {
+		cancelDownload()
+		return
+	}
+
 	dir := filepath.Dir(pendingDownloadPath)
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -102,12 +118,11 @@ func startDownload() {
 	url := pendingDownloadURL
 	dest := pendingDownloadPath
 
-	if info, err := os.Stat(dest); err == nil || !info.IsDir() || url == "" {
-		cancelDownload()
+	cancelDownload()
+
+	if info, err := os.Stat(dest); err == nil && info.IsDir() {
 		return
 	}
-
-	cancelDownload()
 
 	item := &DownloadItem{
 		Name:		filepath.Base(dest),
@@ -139,6 +154,26 @@ func startDownload() {
 }
 
 func performDownload(url, dest string, item *DownloadItem) error {
+	if strings.HasPrefix(url, "data:") {
+		commaIdx := strings.IndexByte(url, ',')
+		if commaIdx == -1 {
+			return fmt.Errorf("invalid data URI")
+		}
+		meta := url[:commaIdx]
+		rawData := url[commaIdx+1:]
+		var bytesData []byte
+		var err error
+		if strings.Contains(meta, ";base64") {
+			bytesData, err = base64.StdEncoding.DecodeString(rawData)
+			if err != nil {
+				return err
+			}
+		} else {
+			bytesData = []byte(rawData)
+		}
+		return os.WriteFile(dest, bytesData, 0644)
+	}
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -207,7 +242,5 @@ func ClearDownloads() {
 	downloads = nil
 	dlMu.Unlock()
 
-	if appWindow != nil {
-		appWindow.UpdateDownloadBar()
-	}
+	UpdateDownloadBar()
 }

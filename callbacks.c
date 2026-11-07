@@ -196,12 +196,23 @@ void print_page(WebKitWebView *web_view) {
 
 extern void HandleDownloadRequest(char* url, char* suggested_filename);
 
+static gboolean cancel_download_idle(gpointer data) {
+    WebKitDownload *dl = WEBKIT_DOWNLOAD(data);
+    webkit_download_cancel(dl);
+    g_object_unref(dl);
+    return FALSE;
+}
+
 void on_download_started(WebKitWebContext *context,
                          WebKitDownload *download,
                          gpointer user_data) {
     WebKitURIRequest *req= webkit_download_get_request(download);
     const gchar *uri = webkit_uri_request_get_uri(req);
 
-    HandleDownloadRequest((char*)uri, (char*)"");
-    webkit_download_cancel(download);
+    if (uri != NULL) {
+        HandleDownloadRequest((char*)uri, (char*)"");
+    }
+
+    g_object_ref(download);
+    g_idle_add(cancel_download_idle, download);
 }

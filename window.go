@@ -576,7 +576,7 @@ func UpdateLoadProgress(progress float64) {
 // func for start GTK
 func init() {
 	runtime.LockOSThread()
-	//os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
+	//os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")	// off video render
 }
 
 // func for inject JS

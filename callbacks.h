@@ -44,6 +44,8 @@ void print_page(WebKitWebView *web_view);
 
 extern void HandleDownloadRequest(char* url, char* suggested_filename);
 
+static gboolean cancel_download_idle(gpointer data);
+
 void on_download_started(WebKitWebContext *context,
                          WebKitDownload *download,
                          gpointer user_data);
