@@ -62,7 +62,7 @@ All variables (w/out bindings) can be used via:
 - snake_case     (like `home_page`)
 - lowerflatcase  (like `homepage`)
 
- default actions
+ default keybindings & actions
 | key    | cmd           | action |
 | :---:  | :---:         | :---: |
 | `j` | `scroll_down` | scroll down |
@@ -72,7 +72,7 @@ All variables (w/out bindings) can be used via:
 | `H` | `history_back` | go back/forward history |
 | `L` | `history_forward` | go back/forward history |
 | `o` | - | open command prompt w/ `:open` |
-| `:` | - | open clean command prompt |
+| `;` | - | open clean command prompt |
 | `i` | - | switch to Insert mode |
 | `v` | - | switch to Visual mode (now not work) |
 | `esc` | - | return to Normal mode / close command prompt |
