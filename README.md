@@ -68,6 +68,8 @@ All variables (w/out bindings) can be used via:
 | :---:  | :---:         | :---: |
 | `j` | `scroll_down` | scroll down |
 | `k` | `scroll_up`   | scroll up |
+| `h` | `scroll_left`   | scroll up |
+| `l` | `scroll_right`   | scroll up |
 | `gg` | `scroll_top`  | go to page's top |
 | `G` | `scroll_bottom` | go to page's bottom |
 | `H` | `history_back` | go back/forward history |
