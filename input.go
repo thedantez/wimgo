@@ -89,6 +89,13 @@ func processNormalChord(buf string) (done bool, pending bool) {
 	}
 
 	action, exists := appConfig.KeyBindings[cmd]
+	if buf[0] == 'g' && buf[len(buf) - 1] >= '0' && buf[len(buf) - 1] <= '9' && appWindow != nil {
+		count, err := strconv.Atoi(buf[1:])
+		if err == nil && count <= len(appWindow.tabs) {
+			appWindow.SwitchTab(count - 1)
+		}
+		return true, false
+	}
 	if !exists {
 		slog.Warn("unknown or unbound key chord", "chord", buf)
 		return true, false
@@ -131,6 +138,8 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.CloseTab(appWindow.activeTab)
 	case "clear_downloads":
 		ClearDownloads()
+	case "g1":
+		slog.Info("detected g1")
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}

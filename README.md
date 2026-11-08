@@ -62,12 +62,8 @@ All variables (w/out bindings) can be used via:
 - snake_case     (like `home_page`)
 - lowerflatcase  (like `homepage`)
 
-# keybindings
-u can use multipled keybindings like `<num><keybind>`
-for example u can press `3j` then `j` will emulate 3 presses
-or u can use `0r`/`0R` for soft reload / hard reload in all tabs
-
- default keybindings & actions
+# default keybindings & actions
+ (u can't change keybind by configuration if cmd == -)
 | key    | cmd           | action |
 | :---:  | :---:         | :---: |
 | `j` | `scroll_down` | scroll down |
@@ -76,11 +72,6 @@ or u can use `0r`/`0R` for soft reload / hard reload in all tabs
 | `G` | `scroll_bottom` | go to page's bottom |
 | `H` | `history_back` | go back/forward history |
 | `L` | `history_forward` | go back/forward history |
-| `o` | - | open command prompt w/ `:open` |
-| `;` | - | open clean command prompt |
-| `i` | - | switch to Insert mode |
-| `v` | - | switch to Visual mode (now not work) |
-| `esc` | - | return to Normal mode / close command prompt |
 | `r` | `soft_reload` | reload site (like soft reload: use unchanged data from cache) |
 | `R` | `hard_reload` | hard reload site (full reload site) |
 | `-` | `zoom_out` | zoom out |
@@ -91,6 +82,13 @@ or u can use `0r`/`0R` for soft reload / hard reload in all tabs
 | `K` | `tab_prev` | goto previous tab (goto left) |
 | `d` | `tab_close` | close active tab |
 | `cd` | `clear_downloads` | clear downloads bar |
+| `o` | - | open command prompt w/ `:open` |
+| `;` | - | open clean command prompt |
+| `i` | - | switch to Insert mode |
+| `v` | - | switch to Visual mode (now not work) |
+| `esc` | - | return to Normal mode / close command prompt |
+| `g<num>` | - | go to `<num>` tab (if it exists) |
+| `<num><key>` | - | make `<num>` times `<key>` (like `2j`) |
 
 # installing (building from source)
 ## dependencies
