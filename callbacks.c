@@ -171,6 +171,10 @@ void apply_webview_dark_mode(WebKitWebView *web_view) {     // 0 =no_preference,
         webkit_settings_set_enable_mediasource(settings, TRUE);
         webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND);
     }
+
+    GdkRGBA bg_color;
+    gdk_rgba_parse(&bg_color, "#000000");
+    webkit_web_view_set_background_color(web_view, &bg_color);
 }
 
 void inject_js(WebKitWebView *web_view, const char *js_code) {
