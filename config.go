@@ -57,6 +57,7 @@ func DefaultKeyBindings() map[string]string{
 		"=":	"reset_zoom",
 		//"zz":	"reset_zoom",
 		"cd":	"clear_downloads",
+		"go":	"go",
 	}
 }
 

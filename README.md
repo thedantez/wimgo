@@ -84,6 +84,7 @@ All variables (w/out bindings) can be used via:
 | `K` | `tab_prev` | goto previous tab (goto left) |
 | `d` | `tab_close` | close active tab |
 | `cd` | `clear_downloads` | clear downloads bar |
+| `go` | `go` | open command prompt w/ `:open <current uri>` |
 | `o` | - | open command prompt w/ `:open` |
 | `;` | - | open clean command prompt |
 | `i` | - | switch to Insert mode |

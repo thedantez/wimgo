@@ -138,8 +138,12 @@ func processNormalChord(buf string) (done bool, pending bool) {
 		appWindow.CloseTab(appWindow.activeTab)
 	case "clear_downloads":
 		ClearDownloads()
-	case "g1":
-		slog.Info("detected g1")
+	case "go":
+		if appWindow != nil {
+			currentMode = ModeCommand
+			appWindow.SetStatus("[COMMAND] ")
+			appWindow.OpenCommand(":open " + appWindow.CurrentUri())
+		}
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}
