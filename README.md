@@ -6,15 +6,6 @@ minimalist, keyboard driven web browser written in Go using WebKit & CGO
 ![Go](https://img.shields.io/badge/go-1.22+-blue)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
 
-# features
-- **modal ui** : modes (`normal`, `insert`, `command`, `visual`(in progress))
-- **minimalist statusbar** : flat monochrome command entry & laod progress indicator
-- **native dark mode** : via GTK & WebKit settings
-- **fast work** : quick command execution & native work in linux via GTK
-- **dynamic configuration** : line-by-line evaluated config file (`~/.config/wimgo/config`)
-- **vim-like navigation** : shows hints to emulate mouse clicks
-- **customizable keybindings** : rebind/disable shorcuts on the fly via `:bind` & `:unbind`
-
 # commands
 | command | action |
 | :---: | :---: |
@@ -89,6 +80,7 @@ All variables (w/out bindings) can be used via:
 | `;` | - | open clean command prompt |
 | `i` | - | switch to Insert mode |
 | `v` | - | switch to Visual mode (now not work) |
+| `x` | - | switch to Passthrough mode (exit by shift + escape) |
 | `esc` | - | return to Normal mode / close command prompt |
 | `g<num>` | - | go to `<num>` tab (if it exists) |
 | `<num><key>` | - | make `<num>` times `<key>` (like `2j`) |

@@ -186,6 +186,10 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 					appWindow.OpenCommand(":")
 					appWindow.SetStatus("[COMMAND] ")
 					return C.TRUE
+				case 120: 	// x
+					currentMode = ModePassthrough
+					appWindow.SetStatus("[PASSTHROUGH]")
+					return C.TRUE
 			}
 			resetKeyBuffer()
 		}
@@ -216,6 +220,13 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 			return C.TRUE
 		}
 		return C.TRUE
+	case 9:		// ModePassthrough
+		if keyval == 65307 && state == 1 {	// escape + shift
+			currentMode = ModeNormal
+			appWindow.SetStatus("[NORMAL] ")
+			return C.TRUE
+		}
+		return C.FALSE
 	default:	// ModeInsert/ModeVisible/ModeCommand
 		if keyval == 0xff1b {		// escape
 			if currentMode == ModeCommand {

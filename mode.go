@@ -11,6 +11,7 @@ const (
 	ModeDownloadConfirmDir 		 // 6
 	ModeDownloadConfirmOverwrite // 7
 	ModeProxyExceptions			 // 8
+	ModePassthrough				 // 9
 )
 var currentMode = ModeNormal
 
@@ -26,6 +27,8 @@ func (m Mode) String() string {
 		return "COMMAND"
 	case ModeHints:
 		return "HINTS"
+	case ModePassthrough:
+		return "PASSTHROUGH"
 	default:
 		return "UNKNOWN"
 	}
