@@ -46,6 +46,12 @@ extern void HandleDownloadRequest(char* url, char* suggested_filename);
 
 static gboolean cancel_download_idle(gpointer data);
 
+WebKitWebView* on_create_webview(WebKitWebView *web_view,
+                                 WebKitNavigationAction *navigation_action,
+                                 gpointer user_data);
+
+extern void OpenNewTabFromC(char* uri);
+
 void on_download_started(WebKitWebContext *context,
                          WebKitDownload *download,
                          gpointer user_data);

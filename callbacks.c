@@ -207,6 +207,17 @@ static gboolean cancel_download_idle(gpointer data) {
     return FALSE;
 }
 
+WebKitWebView* on_create_webview(WebKitWebView *web_view,
+                                 WebKitNavigationAction *navigation_action,
+                                 gpointer user_data) {
+    WebKitURIRequest *req = webkit_navigation_action_get_request(navigation_action);
+    const gchar *uri = webkit_uri_request_get_uri(req);
+    if (uri != NULL && strlen(uri) > 0) {
+        OpenNewTabFromC((char*)uri);
+    }
+    return NULL;
+}
+
 void on_download_started(WebKitWebContext *context,
                          WebKitDownload *download,
                          gpointer user_data) {

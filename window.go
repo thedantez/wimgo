@@ -114,6 +114,13 @@ func (b *BrowserWindow) ActiveWebView() *C.WebKitWebView {
 
 var tabCounter int
 
+//export OpenNewTabFromC
+func OpenNewTabFromC(cURI *C.char) {
+	if appWindow != nil && cURI != nil {
+		appWindow.NewTab(C.GoString(cURI))
+	}
+}
+
 func (b *BrowserWindow) NewTab(url string) {
 	tabCounter++
 
@@ -144,6 +151,15 @@ func (b *BrowserWindow) NewTab(url string) {
 		C.gpointer(webView),
 		(*C.gchar)(unsafe.Pointer(cSignalChanged)),
 		C.GCallback(C.on_load_changed),
+		nil, nil, 0,
+	)
+
+	cSignalCreate := C.CString("create")		// if web need to open new tab
+	defer C.free(unsafe.Pointer(cSignalCreate))
+	C.g_signal_connect_data(	// connect w/ C-world
+		C.gpointer(webView),
+		(*C.gchar)(unsafe.Pointer(cSignalCreate)),
+		C.GCallback(C.on_create_webview),
 		nil, nil, 0,
 	)
 
