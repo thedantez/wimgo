@@ -10,6 +10,15 @@ void init_global_context(const char *data_dir,
         return;
     }
 
+    // manipulating memory
+    WebKitMemoryPressureSettings *mem_settings = webkit_memory_pressure_settings_new();
+    webkit_memory_pressure_settings_set_memory_limit(mem_settings, 2048); // limit 2GiB to web interface
+    webkit_memory_pressure_settings_set_conservative_threshold(mem_settings, 0.5); // start cleaning from 50% (1GiB)
+    webkit_memory_pressure_settings_set_strict_threshold(mem_settings, 0.75);      // agressive cleaning from 75% (1.5 GiB)
+    webkit_memory_pressure_settings_set_poll_interval(mem_settings, 2.5);          // check every 2.5 seconds
+    webkit_website_data_manager_set_memory_pressure_settings(mem_settings);
+    webkit_memory_pressure_settings_free(mem_settings);
+
     WebKitWebsiteDataManager *manager;
     if (ephemeral) {
         manager = webkit_website_data_manager_new_ephemeral();
@@ -162,7 +171,8 @@ void set_webview_webgl(WebKitWebView *web_view, gboolean flag) {
 void apply_webview_dark_mode(WebKitWebView *web_view) {     // 0 =no_preference, 1=light, 2=dark
     WebKitSettings *settings = webkit_web_view_get_settings(web_view);
     WebKitWebContext *context = webkit_web_view_get_context(web_view);
-    webkit_web_context_set_cache_model(context, WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+    //webkit_web_context_set_cache_model(context, WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER); // old model
+    webkit_web_context_set_cache_model(context, WEBKIT_CACHE_MODEL_WEB_BROWSER);
     if (settings != NULL) {
         if (g_object_class_find_property(G_OBJECT_GET_CLASS(settings), "color-scheme")) {
             g_object_set(G_OBJECT(settings), "color-scheme", 2, NULL);
