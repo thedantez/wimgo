@@ -95,6 +95,39 @@ func (b *BrowserWindow) Print() {
 	C.print_page(b.ActiveWebView())
 }
 
+// funcs for search in page
+func (b *BrowserWindow) Search(query string, backwards bool) {
+	view := b.ActiveWebView()
+	if view == nil {
+		return
+	}
+	cQuery := C.CString(query)
+	defer C.free(unsafe.Pointer(cQuery))
+	var cBack C.gboolean
+	if backwards {
+		cBack = 1
+	}
+	C.search_text(view, cQuery, cBack)
+}
+
+func (b *BrowserWindow) SearchNext() {
+	if view := b.ActiveWebView(); view != nil {
+		C.search_next(view)
+	}
+}
+
+func (b *BrowserWindow) SearchPrev() {
+	if view := b.ActiveWebView(); view != nil {
+		C.search_prev(view)
+	}
+}
+
+func (b *BrowserWindow) ClearSearch() {
+	if view := b.ActiveWebView(); view != nil {
+		C.search_clear(view)
+	}
+}
+
 // func for get current uri (uses in command.go)
 func (b *BrowserWindow) CurrentUri() string {
 	cStr := C.webkit_web_view_get_uri(b.ActiveWebView())

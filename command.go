@@ -71,6 +71,32 @@ func HandleCmdEntry(raw string) {	// takes raw from cmdEntry from window.go & pa
 		return
 	}
 
+	if strings.HasPrefix(raw, "/") {
+		query := strings.TrimPrefix(raw, "/")
+		if query != "" && appWindow != nil {
+			appWindow.Search(query, false)
+		}
+		if appWindow != nil {
+			appWindow.CloseCommand()
+			currentMode= ModeNormal
+			appWindow.SetStatus("[NORMAL] ")
+		}
+		return
+	}
+
+	if strings.HasPrefix(raw, "?") {
+		query := strings.TrimPrefix(raw, "?")
+		if query != "" && appWindow != nil {
+			appWindow.Search(query, true)
+		}
+		if appWindow != nil {
+			appWindow.CloseCommand()
+			currentMode= ModeNormal
+			appWindow.SetStatus("[NORMAL] ")
+		}
+		return
+	}
+
 	if strings.HasPrefix(raw, ":") {		// if command exists
 		cleanCmd := strings.TrimPrefix(raw, ":")
 		//split by :command & flags & parametr (what to open, for example)

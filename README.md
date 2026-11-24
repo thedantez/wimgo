@@ -76,11 +76,15 @@ All variables (w/out bindings) can be used via:
 | `d` | `tab_close` | close active tab |
 | `cd` | `clear_downloads` | clear downloads bar |
 | `go` | `go` | open command prompt w/ `:open <current uri>` |
+| `n` | `search_next` | next in search mode |
+| `N` | `search_prev` | previous in search mode |
 | `o` | - | open command prompt w/ `:open` |
 | `;` | - | open clean command prompt |
 | `i` | - | switch to Insert mode |
 | `v` | - | switch to Visual mode (now not work) |
 | `x` | - | switch to Passthrough mode (exit by shift + escape) |
+| `/` | - | switch to Search mode |
+| `?` | - | switch to Backwards Search mode |
 | `esc` | - | return to Normal mode / close command prompt |
 | `g<num>` | - | go to `<num>` tab (if it exists) |
 | `<num><key>` | - | make `<num>` times `<key>` (like `2j`) |

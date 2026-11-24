@@ -129,6 +129,10 @@ func processNormalChord(buf string) (done bool, pending bool) {
 			appWindow.SetStatus("[COMMAND] ")
 			appWindow.OpenCommand(":open " + appWindow.CurrentUri())
 		}
+	case "search_next":
+		appWindow.SearchNext()
+	case "search_prev":
+		appWindow.SearchPrev()
 	default:
 		slog.Warn("unknown key chord", "chord", buf)
 	}
@@ -144,6 +148,7 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		}
 		if	keyval == 0xff1b {	// esc
 			resetKeyBuffer()
+			appWindow.ClearSearch()
 			return C.FALSE
 		}
 		if keyBuffer == "" {
@@ -174,6 +179,16 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 				case 120: 	// x
 					currentMode = ModePassthrough
 					appWindow.SetStatus("[PASSTHROUGH]")
+					return C.TRUE
+				case 47:	// /
+					currentMode = ModeCommand
+					appWindow.OpenCommand("/")
+					appWindow.SetStatus("[SEARCH] ")
+					return C.TRUE
+				case 63:	// ?
+					currentMode = ModeCommand
+					appWindow.OpenCommand("?")
+					appWindow.SetStatus("[SEARCH] ")
 					return C.TRUE
 			}
 			resetKeyBuffer()

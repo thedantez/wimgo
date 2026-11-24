@@ -279,3 +279,27 @@ void set_context_proxy(const char *proxy_uri, const char *ignore_hosts) {
     }
 }
 
+void search_text(WebKitWebView *web_view, const char *text, gboolean backwards) {
+    if (!web_view || !text) return;
+    WebKitFindController *fc = webkit_web_view_get_find_controller(web_view);
+    guint32 options = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE | WEBKIT_FIND_OPTIONS_WRAP_AROUND;
+    if (backwards) {
+        options |= WEBKIT_FIND_OPTIONS_BACKWARDS;
+    }
+    webkit_find_controller_search(fc, text, options, G_MAXUINT);
+}
+
+void search_next(WebKitWebView *web_view) {
+    if (!web_view) return;
+    webkit_find_controller_search_next(webkit_web_view_get_find_controller(web_view));
+}
+
+void search_prev(WebKitWebView *web_view) {
+    if (!web_view) return;
+    webkit_find_controller_search_previous(webkit_web_view_get_find_controller(web_view));
+}
+
+void search_clear(WebKitWebView *web_view) {
+    if (!web_view) return;
+    webkit_find_controller_search_finish(webkit_web_view_get_find_controller(web_view));
+}

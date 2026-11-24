@@ -60,4 +60,9 @@ void schedule_label_update(GtkWidget *widget, const char *text, int show);
 
 void set_context_proxy(const char *proxy_uri, const char *ignore_hosts);
 
+void search_text(WebKitWebView *web_view, const char *text, gboolean backwards);
+void search_next(WebKitWebView *web_view);
+void search_prev(WebKitWebView *web_view);
+void search_clear(WebKitWebView *web_view);
+
 #endif
