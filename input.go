@@ -215,7 +215,13 @@ func HandleKeyPress(keyval C.guint, state C.guint) C.gboolean {
 		if keyval == 0xff1b {		// escape
 			ExitHints()
 		}
-		if keyval >= 32 && keyval <= 126 {
+		if keyval == 105 {
+			ExitHints()
+			currentMode = ModeInsert
+			appWindow.SetStatus("[INSERT] ")
+			return C.TRUE
+		}
+		if keyval >= 32 && keyval <= 126 && keyval != 105 {
 			ProcessHintKey(rune(keyval))
 			return C.TRUE
 		}
