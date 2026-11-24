@@ -421,6 +421,18 @@ func (b *BrowserWindow) ReloadBypassCache() {	// like hard reload (full reload s
 	C.webkit_web_view_reload_bypass_cache(b.ActiveWebView())
 }
 
+func (b *BrowserWindow) ReloadTab(index int) {
+	if b != nil && index >= 0 && index < len(b.tabs) {
+		C.webkit_web_view_reload(b.tabs[index].webView)
+	}
+}
+
+func (b *BrowserWindow) ReloadTabBypassCache(index int) {
+	if b != nil && index >= 0 && index < len(b.tabs) {
+		C.webkit_web_view_reload_bypass_cache(b.tabs[index].webView)
+	}
+}
+
 func (b *BrowserWindow) StopLoading() {
 	C.webkit_web_view_stop_loading(b.ActiveWebView())
 }

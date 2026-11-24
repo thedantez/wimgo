@@ -44,45 +44,8 @@ func splitCountAndCmd(buf string) (int, string) {
 }
 
 func processNormalChord(buf string) (done bool, pending bool) {
+	//slog.Info("PRESSED", "buf", buf)	// log for checking buffer
 	count, cmd := splitCountAndCmd(buf)
-
-	if cmd == "soft_reload" && appWindow != nil {
-		if count > 0 && len(appWindow.tabs) >= count {
-			activeTab := appWindow.activeTab
-			appWindow.SwitchTab(count-1)
-			appWindow.Reload()
-			appWindow.SwitchTab(activeTab)
-			return true, false
-		} else if count == 0 {
-			// reloading all tabs
-			activeTab := appWindow.activeTab
-			for i := range appWindow.tabs {
-				appWindow.SwitchTab(i)
-				appWindow.Reload()
-			}
-			appWindow.SwitchTab(activeTab)
-		}
-	}
-
-
-	if cmd == "hard_reload" && appWindow != nil {
-		if count > 0 && len(appWindow.tabs) >= count {
-			activeTab := appWindow.activeTab
-			appWindow.SwitchTab(count-1)
-			appWindow.ReloadBypassCache()
-			appWindow.SwitchTab(activeTab)
-			return true, false
-		} else if count == 0 {
-			// reloading all tabs
-			activeTab := appWindow.activeTab
-			for i := range appWindow.tabs {
-				appWindow.SwitchTab(i)
-				appWindow.ReloadBypassCache()
-			}
-			appWindow.SwitchTab(activeTab)
-		}
-	}
-
 
 	if cmd == "" || cmd == "g" || cmd == "z" || cmd == "c" {
 		return false, true
@@ -117,9 +80,31 @@ func processNormalChord(buf string) (done bool, pending bool) {
 	case "hints":
 		StartHints()
 	case "soft_reload":
-		appWindow.Reload()
+		hasPrefix := buf[0] >= '0' && buf[0] <= '9'
+		if hasPrefix {
+			if buf[0] == '0' {
+				for i := range appWindow.tabs {
+					appWindow.ReloadTab(i)
+				}
+			} else {
+				appWindow.ReloadTab(count -1)
+			}
+		} else {
+			appWindow.Reload()
+		}
 	case "hard_reload":
-		appWindow.ReloadBypassCache()
+		hasPrefix := buf[0] >= '0' && buf[0] <= '9'
+		if hasPrefix {
+			if buf[0] == '0' {
+				for i := range appWindow.tabs {
+					appWindow.ReloadTabBypassCache(i)
+				}
+			} else {
+				appWindow.ReloadTabBypassCache(count -1)
+			}
+		} else {
+			appWindow.ReloadBypassCache()
+		}
 	case "history_back":
 		appWindow.GoBack()
 	case "history_forward":
